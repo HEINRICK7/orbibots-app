@@ -1,0 +1,11 @@
+.screen { min-height: 100vh; display: flex; flex-direction: column; gap: 20px; padding: 32px clamp(16px, 4vw, 64px); background: #111315; color: #eef0f2; }
+.header { display: flex; align-items: center; justify-content: space-between; }
+.eyebrow { color: #8f98a2; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+.createPanel, .tablePanel { border: 1px solid #30353a; background: #191c1f; }
+.form { display: grid; grid-template-columns: repeat(3, minmax(150px, 1fr)); gap: 14px; align-items: end; }
+.form label { display: flex; flex-direction: column; gap: 7px; color: #c6cbd0; font-size: 12px; }
+.help { display: block; margin-top: 14px; color: #939ba4; font-size: 12px; }
+.retry { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 16px; padding: 12px; border: 1px solid #665024; border-radius: 8px; }
+.pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; color: #9ba1a8; }
+.pagination > div { display: flex; gap: 8px; }
+@media (max-width: 860px) { .form { grid-template-columns: 1fr; } .pagination { align-items: flex-start; flex-direction: column; } }

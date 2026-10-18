@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "runs": [
+    {
+      "date": "2026-10-17",
+      "artifact": "OrbiBots Agent Builder",
+      "genre": "modern-minimal",
+      "theme": "Cobalt dark",
+      "macrostructure": "Workbench",
+      "navigation": "N9 edge-aligned minimal",
+      "footer": "Ft2 inline-rule single-line",
+      "previousNavigation": null,
+      "note": "First visual artifact. Builder tabs are the primary navigation; app bar carries prototype status only."
+    }
+  ]
+}

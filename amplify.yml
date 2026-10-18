@@ -1,0 +1,32 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - nvm use 22
+        - npm ci
+    build:
+      commands:
+        - |
+          set -eu
+          : "${ORBIBOTS_FRONTEND_ORIGIN:?Configure ORBIBOTS_FRONTEND_ORIGIN in Amplify}"
+          : "${ORBIBOTS_API_ORIGIN:?Configure ORBIBOTS_API_ORIGIN in Amplify}"
+          : "${COGNITO_MANAGED_LOGIN_URL:?Configure COGNITO_MANAGED_LOGIN_URL in Amplify}"
+          : "${COGNITO_APP_CLIENT_ID:?Configure COGNITO_APP_CLIENT_ID in Amplify}"
+          : "${COGNITO_ISSUER_URI:?Configure COGNITO_ISSUER_URI in Amplify}"
+          printf '%s\n' \
+            "ORBIBOTS_FRONTEND_ORIGIN=${ORBIBOTS_FRONTEND_ORIGIN}" \
+            "ORBIBOTS_API_ORIGIN=${ORBIBOTS_API_ORIGIN}" \
+            "COGNITO_MANAGED_LOGIN_URL=${COGNITO_MANAGED_LOGIN_URL}" \
+            "COGNITO_APP_CLIENT_ID=${COGNITO_APP_CLIENT_ID}" \
+            "COGNITO_ISSUER_URI=${COGNITO_ISSUER_URI}" \
+            > .env.production
+          npm run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*
