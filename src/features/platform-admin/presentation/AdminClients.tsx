@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Button, Card, Input, Spin, Table, Tag, Typography } from "antd";
+import { Alert, Button, Card, ConfigProvider, Input, Spin, Table, Tag, Typography, theme } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useRouter } from "next/navigation";
 import type { CompanySummary } from "@/features/agent-builder/domain/api-contracts";
@@ -92,52 +92,93 @@ export function AdminClients() {
   }
 
   const columns: ColumnsType<CompanySummary> = [
-    { title: "Empresa", dataIndex: "name", key: "name" },
+    { title: "Empresa", dataIndex: "name", key: "name", render: (value: string) => <span className={styles.company}>{value}</span> },
     { title: "Segmento", dataIndex: "segment", key: "segment" },
-    { title: "Responsável", dataIndex: "ownerEmail", key: "ownerEmail", render: (value: string | null) => value || "Ainda não convidado" },
-    { title: "Convite", dataIndex: "invitationStatus", key: "invitationStatus", render: (value: string | null) => value
-      ? <Tag color={value === "SENT" ? "green" : value === "FAILED" ? "red" : "gold"}>{value === "SENT" ? "SOLICITADO AO COGNITO" : value}</Tag>
-      : <Tag>SEM CONVITE</Tag> },
-    { title: "Conta", dataIndex: "status", key: "status", render: (value: string) => <Tag>{value}</Tag> },
+    { title: "Responsável", dataIndex: "ownerEmail", key: "ownerEmail", render: (value: string | null) => value || <span className={styles.muted}>Ainda não convidado</span> },
+    { title: "Convite", dataIndex: "invitationStatus", key: "invitationStatus", render: (value: string | null) => <InvitationTag status={value} /> },
+    { title: "Conta", dataIndex: "status", key: "status", render: (value: string) => <Tag>{accountLabel(value)}</Tag> },
     { title: "Ação", key: "action", render: (_value, record) => record.ownerEmail
       ? <Button size="small" disabled={saving} onClick={() => void deliverInvitation(record.id, record.ownerEmail!, crypto.randomUUID())}>Reenviar convite</Button>
       : null },
   ];
+  const ready = Boolean(name.trim() && segment.trim() && email.trim());
 
-  return <main className={styles.screen}>
-    <header className={styles.header}>
-      <div><div className={styles.eyebrow}>OrbiBots · Administração</div><Typography.Title level={2}>Empresas</Typography.Title></div>
-      <Button href="/api/auth/logout">Sair</Button>
-    </header>
-    {error && <Alert type="error" showIcon message={error} closable onClose={() => setError("")} />}
-    {notice && <Alert type="success" showIcon message={notice} closable onClose={() => setNotice("")} />}
-    <Card className={styles.createPanel} title="Adicionar cliente">
-      <form ref={createFormRef} className={styles.form} onSubmit={(event) => void handleCreate(event)}>
-        <label>Empresa<Input value={name} onChange={(event) => setName(event.target.value)} maxLength={200} required disabled={saving || Boolean(pendingCompany)} placeholder="Nome da empresa" /></label>
-        <label>Segmento<Input value={segment} onChange={(event) => setSegment(event.target.value)} maxLength={120} required disabled={saving || Boolean(pendingCompany)} placeholder="Ex.: Confeitaria" /></label>
-        <label>E-mail do responsável<Input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={320} required disabled={saving || Boolean(pendingCompany)} placeholder="responsavel@empresa.com" /></label>
-        <Button type="primary" htmlType="submit" loading={saving} disabled={saving || Boolean(pendingCompany) || !name.trim() || !segment.trim() || !email.trim()}>Criar empresa e solicitar acesso</Button>
-      </form>
-      <Typography.Text className={styles.help}>A empresa é persistida pelo backend. O Cognito cria o usuário e solicita o envio do convite por e-mail com senha temporária; o primeiro acesso exige nova senha e MFA. WhatsApp ainda não está conectado.</Typography.Text>
-      {pendingCompany && <div className={styles.retry}>
-        <Typography.Text>Não foi possível confirmar a criação. Repetir usa a mesma chave para evitar criar uma empresa duplicada.</Typography.Text>
-        <Button onClick={() => createFormRef.current?.requestSubmit()} loading={saving}>Tentar novamente</Button>
-      </div>}
-      {pendingInvite && <div className={styles.retry}>
-        <Typography.Text>O estado do convite ainda não foi confirmado para {pendingInvite.email}. A mesma chave não dispara um segundo e-mail enquanto o pedido estiver pendente.</Typography.Text>
-        <Button onClick={() => void deliverInvitation(pendingInvite.tenantId, pendingInvite.email, pendingInvite.key)} loading={saving}>Verificar solicitação</Button>
-      </div>}
-    </Card>
-    <Card className={styles.tablePanel} title="Clientes cadastrados" extra={<Button onClick={() => void refresh(0)} disabled={loading}>Atualizar</Button>}>
-      {loading ? <Spin /> : <Table<CompanySummary> rowKey="id" columns={columns} dataSource={companies} pagination={false}
-        locale={{ emptyText: "O backend não retornou empresas." }} scroll={{ x: 680 }} />}
-      <div className={styles.pagination}>
-        <Typography.Text>{total} empresa(s) retornada(s) pelo backend</Typography.Text>
-        <div>
-          <Button disabled={loading || page === 0} onClick={() => void refresh(page - 1)}>Anterior</Button>
-          <Button disabled={loading || (page + 1) * 20 >= total} onClick={() => void refresh(page + 1)}>Próxima</Button>
+  return (
+    <ConfigProvider theme={{ algorithm: theme.darkAlgorithm, token: { fontFamily: "Inter Variable, Inter, sans-serif", borderRadius: 10, colorPrimary: "#7eb6e6" } }}>
+      <main className={styles.screen}>
+        <header className={styles.topbar}>
+          <div className={styles.brand}>
+            <span className={styles.mark} aria-hidden="true">O</span>
+            <div>
+              <p className={styles.kicker}>OrbiBots</p>
+              <h1 className={styles.title}>Empresas</h1>
+            </div>
+          </div>
+          <Button className={styles.logout} href="/api/auth/logout">Sair</Button>
+        </header>
+        {error && <Alert type="error" showIcon message={error} closable onClose={() => setError("")} />}
+        {notice && <Alert type="success" showIcon message={notice} closable onClose={() => setNotice("")} />}
+        <div className={styles.workspace}>
+          <Card className={styles.panel} title="Nova empresa">
+            <form ref={createFormRef} className={styles.form} onSubmit={(event) => void handleCreate(event)}>
+              <label className={styles.field}>Empresa
+                <Input value={name} onChange={(event) => setName(event.target.value)} maxLength={200} required disabled={saving || Boolean(pendingCompany)} placeholder="Nome da empresa" />
+              </label>
+              <label className={styles.field}>Segmento
+                <Input value={segment} onChange={(event) => setSegment(event.target.value)} maxLength={120} required disabled={saving || Boolean(pendingCompany)} placeholder="Ex.: Confeitaria" />
+              </label>
+              <label className={styles.field}>E-mail do responsável
+                <Input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={320} required disabled={saving || Boolean(pendingCompany)} placeholder="responsavel@empresa.com" />
+              </label>
+              <Button className={styles.submit} type="primary" htmlType="submit" loading={saving} disabled={saving || Boolean(pendingCompany) || !ready}>Criar empresa</Button>
+              <p className={styles.help}>O Cognito envia o convite com senha temporária. No primeiro acesso a pessoa cria a senha e o MFA. WhatsApp ainda não está conectado.</p>
+            </form>
+            {pendingCompany && <div className={styles.retry}>
+              <Typography.Text>Não foi possível confirmar a criação. Repetir usa a mesma chave para evitar uma empresa duplicada.</Typography.Text>
+              <Button onClick={() => createFormRef.current?.requestSubmit()} loading={saving}>Tentar novamente</Button>
+            </div>}
+            {pendingInvite && <div className={styles.retry}>
+              <Typography.Text>O convite de {pendingInvite.email} ainda não foi confirmado. A mesma chave não dispara um segundo e-mail enquanto o pedido estiver pendente.</Typography.Text>
+              <Button onClick={() => void deliverInvitation(pendingInvite.tenantId, pendingInvite.email, pendingInvite.key)} loading={saving}>Verificar solicitação</Button>
+            </div>}
+          </Card>
+          <section className={styles.panel}>
+            <div className={styles.panelBody}>
+              <div className={styles.listHead}>
+                <h2 className={styles.listTitle}>Cadastradas</h2>
+                <span className={styles.count}>{loading ? "Consultando" : total === 1 ? "1 empresa" : `${total} empresas`}</span>
+                <Button onClick={() => void refresh(0)} disabled={loading}>Atualizar</Button>
+              </div>
+              {loading ? <Spin /> : companies.length === 0 ? (
+                <div className={styles.empty}>
+                  <p className={styles.emptyTitle}>Nenhuma empresa ainda</p>
+                  <p className={styles.emptyText}>A primeira que você criar aparece aqui, com o responsável e o estado do convite.</p>
+                </div>
+              ) : (
+                <Table<CompanySummary> className={styles.table} rowKey="id" columns={columns} dataSource={companies} pagination={false} scroll={{ x: 680 }} />
+              )}
+              {total > 20 && <div className={styles.pagination}>
+                <Button disabled={loading || page === 0} onClick={() => void refresh(page - 1)}>Anterior</Button>
+                <Button disabled={loading || (page + 1) * 20 >= total} onClick={() => void refresh(page + 1)}>Próxima</Button>
+              </div>}
+            </div>
+          </section>
         </div>
-      </div>
-    </Card>
-  </main>;
+      </main>
+    </ConfigProvider>
+  );
+}
+
+function accountLabel(status: string) {
+  if (status === "ACTIVE") return "Ativa";
+  if (status === "SUSPENDED") return "Suspensa";
+  return status;
+}
+
+function InvitationTag({ status }: { status: string | null }) {
+  if (!status) return <Tag>Sem convite</Tag>;
+  if (status === "SENT") return <Tag color="green">Solicitado</Tag>;
+  if (status === "FAILED") return <Tag color="red">Falhou</Tag>;
+  if (status === "PENDING") return <Tag color="gold">Pendente</Tag>;
+  return <Tag>{status}</Tag>;
 }
