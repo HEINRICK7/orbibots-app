@@ -15,6 +15,7 @@ interface IdentityTabProps {
   uncertainOperations: Set<ApiOperation>;
   onSpecialistNameChange: (value: string) => void;
   onCreateSpecialist: () => void;
+  onPreparePersonalChat: () => void;
 }
 
 export function IdentityTab(props: IdentityTabProps) {
@@ -51,15 +52,25 @@ export function IdentityTab(props: IdentityTabProps) {
           maxLength={120}
           disabled={Boolean(props.specialist)}
         />
-        <Button
-          type="primary"
-          icon={<Glyph name="plus" />}
-          onClick={props.onCreateSpecialist}
-          loading={props.busyOperation === "specialist-create"}
-          disabled={!props.sessionReady || Boolean(props.specialist) || specialistLocked || !props.specialistName.trim()}
-        >
-          Criar especialista
-        </Button>
+        <div className={styles.actionPair}>
+          <Button
+            type="primary"
+            icon={<Glyph name="plus" />}
+            onClick={props.onCreateSpecialist}
+            loading={props.busyOperation === "specialist-create" && props.specialistName.trim() !== "Personal Tech Agent"}
+            disabled={!props.sessionReady || Boolean(props.specialist) || specialistLocked || !props.specialistName.trim()}
+          >
+            Criar especialista
+          </Button>
+          <Button
+            icon={<Glyph name="robot" />}
+            onClick={props.onPreparePersonalChat}
+            loading={props.busyOperation !== null && !props.specialist}
+            disabled={!props.sessionReady || Boolean(props.specialist) || specialistLocked}
+          >
+            Abrir chat técnico
+          </Button>
+        </div>
         {props.specialist && (
           <div className={styles.apiResult}>
             <span>Especialista</span><code>{props.specialist.name}</code>
@@ -71,7 +82,7 @@ export function IdentityTab(props: IdentityTabProps) {
 
       <div className={styles.inlineNotice}>
         <Glyph name="info" />
-        <span>A API atual ainda não grava função, personalidade ou regras do especialista e não oferece leitura/listagem para reabrir agentes. Esses campos não são apresentados como salvos.</span>
+        <span>O chat técnico grava o perfil Personal Tech Agent e uma memória curta. Personalidade livre e a lista de agentes depois do recarregar ainda não existem. WhatsApp fica para depois.</span>
       </div>
     </div>
   );

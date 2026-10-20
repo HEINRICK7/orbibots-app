@@ -19,6 +19,18 @@ describe("OrbiBots API client", () => {
     expect(fetcher.mock.calls[0][1]?.headers).not.toHaveProperty("Authorization");
   });
 
+  it("sends the personal tech profile only when the chat asks for it", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json({ id: "specialist-2", tenantId: "tenant-1", name: "Personal Tech Agent", status: "DRAFT" }, { status: 201 }),
+    );
+
+    await createSpecialist("Personal Tech Agent", "PERSONAL_TECH", fetcher);
+
+    expect(fetcher).toHaveBeenCalledWith("/api/orbibots/specialists", expect.objectContaining({
+      body: JSON.stringify({ name: "Personal Tech Agent", profileKind: "PERSONAL_TECH" }),
+    }));
+  });
+
   it("uses the backend idempotency key for chat messages", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
       Response.json({ messageId: "message-1", text: "Resposta real", evidence: [], actions: [] }),

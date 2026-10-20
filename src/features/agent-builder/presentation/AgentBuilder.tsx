@@ -24,6 +24,7 @@ import type {
   TenantMembershipResponse,
 } from "../domain/api-contracts";
 import { createDocumentKey, validateDocumentFile } from "../application/document-upload";
+import { PERSONAL_TECH_MEMORY, PERSONAL_TECH_NAME } from "../application/personal-tech-memory";
 import type { ApiOperation } from "../application/api-operation";
 import { Glyph } from "./Glyph";
 import { BehaviorTab } from "./BehaviorTab";
@@ -125,6 +126,30 @@ export function AgentBuilder({ workspace }: { workspace: TenantMembershipRespons
       setMessages([]);
       setSource(null);
     }
+  }
+
+  async function handlePreparePersonalChat() {
+    const created = await invoke("specialist-create", () => createSpecialist(PERSONAL_TECH_NAME, "PERSONAL_TECH"));
+    if (!created) return;
+    setSpecialist(created);
+    setSpecialistName(created.name);
+    const ingested = await invoke("document-text", () => ingestTextDocument(created.id, {
+      documentKey: "personal-tech-memory",
+      title: "Memória profissional",
+      format: "MARKDOWN",
+      content: PERSONAL_TECH_MEMORY,
+    }));
+    if (!ingested?.revisionId) return;
+    setRevision(ingested, "seções", ingested.sectionCount);
+    const published = await invoke("publish", () => publishRevision(created.id, ingested.revisionId, specialistVersion));
+    if (!published) return;
+    setPublication(published);
+    setSpecialistVersion(published.version);
+    const started = await invoke("conversation-start", () => startConversation(created.id));
+    if (!started) return;
+    setConversation(started);
+    setMessages([]);
+    setActiveTab("identity");
   }
 
   function setRevision(response: IngestDocumentResponse | SyncRunResponse, itemLabel: string, itemCount: number) {
@@ -254,6 +279,7 @@ export function AgentBuilder({ workspace }: { workspace: TenantMembershipRespons
         uncertainOperations={uncertainOperations}
         onSpecialistNameChange={setSpecialistName}
         onCreateSpecialist={handleCreateSpecialist}
+        onPreparePersonalChat={() => void handlePreparePersonalChat()}
       />,
     },
     {

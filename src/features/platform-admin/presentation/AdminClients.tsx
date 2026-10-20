@@ -5,6 +5,7 @@ import type { ColumnsType } from "antd/es/table";
 import { useRouter } from "next/navigation";
 import type { CompanySummary } from "@/features/agent-builder/domain/api-contracts";
 import { getAccount } from "@/lib/account-api";
+import type { TenantMembershipResponse } from "@/features/agent-builder/domain/api-contracts";
 import { AdminApiError, createCompany, inviteOwner, listCompanies } from "../infrastructure/admin-api";
 import styles from "./AdminClients.module.css";
 
@@ -23,6 +24,7 @@ export function AdminClients() {
   const [notice, setNotice] = useState("");
   const [pendingInvite, setPendingInvite] = useState<{ tenantId: string; email: string; key: string } | null>(null);
   const [pendingCompany, setPendingCompany] = useState<{ name: string; segment: string; key: string } | null>(null);
+  const [workspaces, setWorkspaces] = useState<TenantMembershipResponse[]>([]);
 
   async function refresh(nextPage = page) {
     setLoading(true);
@@ -40,6 +42,7 @@ export function AdminClients() {
     getAccount().then((account) => {
       if (!active) return;
       if (!account.platformAdmin) { router.replace("/"); return; }
+      setWorkspaces(account.memberships);
       void refresh(0);
     }).catch(() => router.replace("/login"));
     return () => { active = false; };
@@ -61,6 +64,8 @@ export function AdminClients() {
         throw new Error("O backend retornou um estado de convite não reconhecido.");
       }
       await refresh(0);
+      const account = await getAccount().catch(() => null);
+      if (account) setWorkspaces(account.memberships);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "O envio do convite não foi confirmado.");
       setPendingInvite({ tenantId, email: ownerEmail, key });
@@ -114,7 +119,12 @@ export function AdminClients() {
               <h1 className={styles.title}>Empresas</h1>
             </div>
           </div>
-          <Button className={styles.logout} href="/api/auth/logout">Sair</Button>
+          <div className={styles.topActions}>
+            {workspaces.map((workspace) => (
+              <Button key={workspace.tenantId} type="primary" href={"/workspace/" + workspace.tenantId}>Abrir chat</Button>
+            ))}
+            <Button className={styles.logout} href="/api/auth/logout">Sair</Button>
+          </div>
         </header>
         {error && <Alert type="error" showIcon message={error} closable onClose={() => setError("")} />}
         {notice && <Alert type="success" showIcon message={notice} closable onClose={() => setNotice("")} />}

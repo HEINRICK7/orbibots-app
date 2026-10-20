@@ -61,6 +61,13 @@
   flex: none;
 }
 
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
 .workspace {
   display: grid;
   grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);

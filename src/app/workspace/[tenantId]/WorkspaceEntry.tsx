@@ -14,7 +14,6 @@ export default function WorkspaceEntry({ tenantId }: { tenantId: string }) {
     async function openWorkspace() {
       try {
         const account = await getAccount();
-        if (account.platformAdmin) { router.replace("/admin/clients"); return; }
         const member = account.memberships.find((item) => item.tenantId === tenantId);
         if (!member || !["TENANT_ADMIN", "TENANT_EDITOR"].includes(member.role)) {
           setError("Sua conta não tem permissão para abrir este workspace."); return;

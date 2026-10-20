@@ -38,8 +38,10 @@ async function post<T>(path: string, body: unknown | FormData | undefined,
   }
   return payload as T;
 }
-export function createSpecialist(name: string, fetcher?: Fetcher) {
-  return post<SpecialistResponse>("specialists", { name }, {}, fetcher);
+export function createSpecialist(name: string, profileOrFetcher?: string | Fetcher, fetcher?: Fetcher) {
+  const profileKind = typeof profileOrFetcher === "string" ? profileOrFetcher : undefined;
+  const client = typeof profileOrFetcher === "function" ? profileOrFetcher : fetcher;
+  return post<SpecialistResponse>("specialists", profileKind ? { name, profileKind } : { name }, {}, client);
 }
 export function ingestTextDocument(specialistId: string, document: TextDocumentRequest, fetcher?: Fetcher) {
   return post<IngestDocumentResponse>("specialists/" + encodeURIComponent(specialistId) + "/documents", document, {}, fetcher);
