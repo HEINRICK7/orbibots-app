@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { verifyCognitoIdToken } from "@/lib/cognito-id-token";
 import { NextRequest, NextResponse } from "next/server";
 import { ACCESS_COOKIE, authClientId, authRedirectUri, cognitoLoginBase, frontendOrigin,
-  OAUTH_STATE_COOKIE, REFRESH_COOKIE, TENANT_COOKIE, clearCookieOptions, sessionCookieOptions } from "@/lib/session-cookies";
+  OAUTH_STATE_COOKIE, REFRESH_COOKIE, TENANT_COOKIE, clearCookieOptions, originMatches, sessionCookieOptions } from "@/lib/session-cookies";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 type OAuthTransaction = { state: string; verifier: string; nonce: string };
@@ -12,7 +12,7 @@ function validEqual(left: string, right: string) {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 function fail(request: NextRequest) {
-  const response = NextResponse.redirect(new URL("/login?error=login_failed", request.url));
+  const response = NextResponse.redirect(new URL("/login?error=login_failed", frontendOrigin(request.url, request.headers)));
   for (const name of [ACCESS_COOKIE, REFRESH_COOKIE, TENANT_COOKIE, OAUTH_STATE_COOKIE]) response.cookies.set(name, "", clearCookieOptions());
   return response;
 }
@@ -20,11 +20,11 @@ export async function GET(request: NextRequest) {
   const base = cognitoLoginBase();
   const clientId = authClientId();
   const issuer = process.env.COGNITO_ISSUER_URI || "";
-  const origin = frontendOrigin(request.url);
+  const origin = frontendOrigin(request.url, request.headers);
   const code = request.nextUrl.searchParams.get("code");
   const state = request.nextUrl.searchParams.get("state");
   const rawTransaction = request.cookies.get(OAUTH_STATE_COOKIE)?.value;
-  if (!base || !clientId || !issuer || new URL(origin).origin !== request.nextUrl.origin || !code || !state || !rawTransaction) return fail(request);
+  if (!base || !clientId || !issuer || !originMatches(request) || !code || !state || !rawTransaction) return fail(request);
   let transaction: OAuthTransaction;
   try { transaction = JSON.parse(Buffer.from(rawTransaction, "base64url").toString("utf8")) as OAuthTransaction; }
   catch { return fail(request); }

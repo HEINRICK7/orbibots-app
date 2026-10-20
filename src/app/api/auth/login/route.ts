@@ -1,13 +1,13 @@
 import { createHash, randomBytes } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { authClientId, authRedirectUri, cognitoLoginBase, frontendOrigin, OAUTH_STATE_COOKIE, sessionCookieOptions } from "@/lib/session-cookies";
+import { authClientId, authRedirectUri, cognitoLoginBase, frontendOrigin, OAUTH_STATE_COOKIE, originMatches, sessionCookieOptions } from "@/lib/session-cookies";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   const base = cognitoLoginBase();
   const clientId = authClientId();
-  const origin = frontendOrigin(request.url);
-  if (!base || !clientId || new URL(origin).origin !== request.nextUrl.origin) {
+  const origin = frontendOrigin(request.url, request.headers);
+  if (!base || !clientId || !originMatches(request)) {
     return NextResponse.json({ code: "cognito_auth_not_configured", detail: "A autenticação Cognito não está configurada para este frontend." },
       { status: 503, headers: { "Cache-Control": "no-store" } });
   }

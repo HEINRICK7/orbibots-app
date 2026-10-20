@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isSupportedApiProxyRequest } from "@/features/agent-builder/infrastructure/proxy-policy";
-import { ACCESS_COOKIE, REFRESH_COOKIE, TENANT_COOKIE, authClientId, cognitoLoginBase,
-  clearCookieOptions, frontendOrigin, sessionCookieOptions } from "@/lib/session-cookies";
+import { ACCESS_COOKIE, REFRESH_COOKIE, TENANT_COOKIE, authClientId, browserOriginAllowed, cognitoLoginBase,
+  clearCookieOptions, sessionCookieOptions } from "@/lib/session-cookies";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 type RouteContext = { params: Promise<{ segments: string[] }> };
@@ -12,9 +12,7 @@ function problem(status: number, title: string, detail: string, code: string) {
   });
 }
 function sameOriginPost(request: NextRequest) {
-  const origin = request.headers.get("origin");
-  const expected = frontendOrigin(request.url);
-  return Boolean(origin && origin === expected && expected === request.nextUrl.origin);
+  return browserOriginAllowed(request);
 }
 async function refreshAccessToken(refreshToken: string): Promise<RefreshedTokens | null> {
   const base = cognitoLoginBase();

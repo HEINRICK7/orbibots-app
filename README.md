@@ -12,7 +12,7 @@ Instale dependências e inicie:
     cp .env.example .env.local
     npm run dev
 
-Configure no ambiente do servidor Next.js: ORBIBOTS_FRONTEND_ORIGIN, ORBIBOTS_API_ORIGIN, COGNITO_MANAGED_LOGIN_URL, COGNITO_APP_CLIENT_ID e COGNITO_ISSUER_URI. Em desenvolvimento, Cognito aceita callback http://localhost; na AWS, use somente a origem HTTPS publicada. Não exponha esses valores como NEXT_PUBLIC_*.
+Configure no ambiente do servidor Next.js: ORBIBOTS_FRONTEND_ORIGIN, ORBIBOTS_API_ORIGIN, COGNITO_MANAGED_LOGIN_URL, COGNITO_APP_CLIENT_ID e COGNITO_ISSUER_URI. Em desenvolvimento, Cognito aceita callback http://localhost; na AWS, use somente a origem HTTPS publicada. Não exponha esses valores como NEXT_PUBLIC_*. O build da Amplify grava os cinco no bundle do servidor, porque o processo SSR não recebe as variáveis do branch e o `.env.production` fica fora do artefato `.next`. O host público chega em `x-forwarded-host` e só vale quando é exatamente `ORBIBOTS_FRONTEND_ORIGIN`.
 
 ## Sessão e autorização
 
@@ -42,7 +42,7 @@ A API não lista/reabre especialistas após recarregar nem grava função, perso
 
 ## Imagem para AWS
 
-O Dockerfile constrói Next.js no modo standalone e executa como usuário sem privilégios. As variáveis de sessão e origens são lidas em runtime e não são embutidas na imagem.
+O Dockerfile constrói Next.js no modo standalone e executa como usuário sem privilégios. Na imagem, as variáveis de sessão e origens continuam sendo lidas em runtime.
 
 O frontend ainda não tem repositório ECR nem deploy AWS separado. A origem HTTPS também depende de domínio/TLS, e o backend staging ainda aguarda a cota de CodeBuild aprovada. Nenhuma imagem ou recurso AWS do frontend foi publicado.
 

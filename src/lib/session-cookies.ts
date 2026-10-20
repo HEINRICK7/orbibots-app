@@ -9,8 +9,54 @@ export function sessionCookieOptions(maxAge: number) {
 export function clearCookieOptions() {
   return { httpOnly: true, secure: secureCookie(), sameSite: "lax" as const, path: "/", maxAge: 0 };
 }
-export function frontendOrigin(requestUrl: string) {
-  return process.env.ORBIBOTS_FRONTEND_ORIGIN || new URL(requestUrl).origin;
+type HeaderSource = { get(name: string): string | null };
+
+function headerValue(headers: HeaderSource, name: string) {
+  return headers.get(name)?.split(",")[0]?.trim() ?? "";
+}
+
+export function configuredFrontendOrigin() {
+  const value = process.env.ORBIBOTS_FRONTEND_ORIGIN;
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    if ((url.protocol !== "https:" && url.protocol !== "http:") || url.username || url.password ||
+        url.pathname !== "/" || url.search || url.hash) return "";
+    return url.origin;
+  } catch { return ""; }
+}
+
+export function forwardedOrigin(headers: HeaderSource) {
+  const host = headerValue(headers, "x-forwarded-host");
+  if (!host || /[\s/\\]/.test(host)) return "";
+  const proto = headerValue(headers, "x-forwarded-proto") || "https";
+  if (proto !== "https" && proto !== "http") return "";
+  try {
+    const url = new URL(`${proto}://${host}`);
+    if (url.username || url.password || url.pathname !== "/" || url.search || url.hash) return "";
+    return url.origin;
+  } catch { return ""; }
+}
+
+export function frontendOrigin(requestUrl: string, headers?: HeaderSource) {
+  return configuredFrontendOrigin() || (headers ? forwardedOrigin(headers) : "") || new URL(requestUrl).origin;
+}
+
+export function originMatches(request: { url: string; nextUrl: { origin: string }; headers: HeaderSource }) {
+  const expected = new URL(frontendOrigin(request.url, request.headers)).origin;
+  const configured = configuredFrontendOrigin();
+  if (configured) {
+    const forwarded = forwardedOrigin(request.headers);
+    return expected === configured && (expected === request.nextUrl.origin || expected === forwarded);
+  }
+  return expected === request.nextUrl.origin;
+}
+
+export function browserOriginAllowed(request: { url: string; nextUrl: { origin: string }; headers: HeaderSource }) {
+  const origin = request.headers.get("origin");
+  if (!origin || !originMatches(request)) return false;
+  try { return new URL(origin).origin === new URL(frontendOrigin(request.url, request.headers)).origin; }
+  catch { return false; }
 }
 export function cognitoLoginBase() {
   const value = process.env.COGNITO_MANAGED_LOGIN_URL?.replace(/\/+$/, "");
