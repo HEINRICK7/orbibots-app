@@ -6,6 +6,7 @@ describe("BFF API allowlist", () => {
     const id = "123e4567-e89b-42d3-a456-426614174000";
     expect(isSupportedApiProxyRequest("GET", ["me"])).toBe(true);
     expect(isSupportedApiProxyRequest("GET", ["platform", "tenants"])).toBe(true);
+    expect(isSupportedApiProxyRequest("GET", ["personal-tech"])).toBe(true);
     expect(isSupportedApiProxyRequest("POST", ["platform", "tenants"])).toBe(true);
     expect(isSupportedApiProxyRequest("POST", ["platform", "tenants", id, "owner-invitation"])).toBe(true);
   });

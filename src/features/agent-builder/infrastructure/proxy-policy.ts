@@ -1,5 +1,5 @@
 const uuid = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}";
-const supportedGetPaths = [/^me$/, /^platform\/tenants$/];
+const supportedGetPaths = [/^me$/, /^platform\/tenants$/, /^personal-tech$/];
 const supportedPostPaths = [
   /^tenants$/, /^specialists$/, /^platform\/tenants$/,
   new RegExp("^platform/tenants/" + uuid + "/owner-invitation$"),

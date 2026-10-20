@@ -5,6 +5,15 @@ export interface CompanyPage { items: CompanySummary[]; page: number; size: numb
 export interface CompanyCreatedResponse { id: string; name: string; segment: string; status: string }
 export interface OwnerInvitationResponse { tenantId: string; email: string; status: string; alreadySent: boolean }
 export interface SpecialistResponse { id: string; tenantId: string; name: string; status: string }
+export interface PersonalTechWorkspaceResponse {
+  specialist: SpecialistResponse;
+  version: number;
+  revisionId: string;
+  publishedAt: string;
+  sectionCount: number;
+  documentKey: string;
+  conversation: StartConversationResponse | null;
+}
 export interface SourceConnectionResponse { sourceId: string; specialistId: string; kind: string; status: string }
 export interface SyncRunResponse { sourceId: string; specialistId: string; revisionId: string; status: string; productCount: number }
 export interface IngestDocumentResponse { sourceId: string; specialistId: string; revisionId: string; documentKey: string; status: string; sectionCount: number }

@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, Button, ConfigProvider, Tabs, Tag, Typography, theme } from "antd";
 import {
   createDocesProductsSource,
   createSpecialist,
   ingestTextDocument,
+  loadPersonalTech,
   OrbiBotsApiError,
   publishRevision,
   sendMessage,
@@ -114,6 +115,35 @@ export function AgentBuilder({ workspace }: { workspace: TenantMembershipRespons
       setBusyOperation(null);
     }
   }
+
+  useEffect(() => {
+    let cancelled = false;
+    loadPersonalTech().then((snapshot) => {
+      if (!snapshot || cancelled) return;
+      setSpecialist(snapshot.specialist);
+      setSpecialistName(snapshot.specialist.name);
+      setSpecialistVersion(snapshot.version);
+      setCandidate({
+        revisionId: snapshot.revisionId,
+        status: "published",
+        sourceId: snapshot.documentKey,
+        itemCount: snapshot.sectionCount,
+        itemLabel: "seções do currículo",
+      });
+      setPublication({
+        specialistId: snapshot.specialist.id,
+        revisionId: snapshot.revisionId,
+        version: snapshot.version,
+        publishedAt: snapshot.publishedAt,
+      });
+      setConversation(snapshot.conversation);
+      setActiveTab("identity");
+    }).catch((error: unknown) => {
+      if (cancelled) return;
+      setLocalError(error instanceof Error ? error.message : "Não foi possível abrir o chat publicado.");
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   async function handleCreateSpecialist() {
     const result = await invoke("specialist-create", () => createSpecialist(specialistName.trim()));
