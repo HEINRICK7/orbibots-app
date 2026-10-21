@@ -5,7 +5,6 @@
 html,
 body {
   min-height: 100%;
-  overflow-x: clip;
   margin: 0;
   background: var(--color-canvas);
   color: var(--color-text);
@@ -15,115 +14,104 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-button,
-input,
-textarea,
-select { font: inherit; }
+body { min-width: 320px; }
+button, input, textarea, select { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { color: inherit; }
+a { color: inherit; }
+h1, h2, h3, h4, h5, p { min-width: 0; overflow-wrap: anywhere; }
 
-h1,
-h2,
-h3,
-h4,
-h5 { min-width: 0; overflow-wrap: anywhere; }
-
-button:focus-visible,
-a:focus-visible,
-input:not(.ant-input):focus-visible,
-textarea:not(.ant-input):focus-visible,
-[tabindex]:focus-visible {
+:focus-visible {
   outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
-::selection {
-  background: var(--color-accent-soft);
-  color: var(--color-text);
+::selection { background: var(--color-accent-soft); color: var(--color-text); }
+
+.appStatePage {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: var(--page-gutter);
+  background: var(--color-canvas);
 }
 
-.ant-btn {
-  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+.appStateLayout { width: min(100%, 72rem); margin-inline: auto; }
+.appStateCard {
+  width: min(100%, 36rem);
+  margin-inline: auto;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border: var(--rule-thin);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
 }
 
-.ant-btn:not(:disabled):active { transform: translateY(1px); }
-
-.ant-btn-primary:not(:disabled) {
-  background: var(--color-accent) !important;
-  color: var(--color-accent-ink) !important;
+.appStateBrand { display: inline-flex; align-items: center; gap: 0.7rem; margin-bottom: 2rem; }
+.appStateLogo {
+  width: 2.4rem;
+  height: 2.4rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.8rem;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  font-size: 1.15rem;
+  font-weight: 700;
 }
-
-.ant-btn:disabled {
-  opacity: 0.48;
-  cursor: not-allowed;
+.appStateBrandName { font-size: 1.02rem; font-weight: 700; letter-spacing: -0.04em; }
+.appStateEyebrow { margin: 0 0 0.65rem; color: var(--color-text-quiet); font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.08em; text-transform: uppercase; }
+.appStateTitle { margin: 0; font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 650; letter-spacing: -0.055em; line-height: 1.12; }
+.appStateCopy { max-width: 58ch; margin: 0.8rem 0 1.5rem; color: var(--color-text-muted); font-size: var(--text-md); line-height: 1.65; }
+.appStateAction {
+  min-height: 2.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  text-decoration: none;
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+  cursor: pointer;
 }
+.appStateAction:hover { background: color-mix(in oklch, var(--color-accent) 88%, var(--color-text)); }
+.appStateAction:active { transform: translateY(1px); }
+.appStateAction:disabled { opacity: 0.55; cursor: not-allowed; }
+.appStateActionSecondary { border-color: var(--color-border); background: var(--color-surface); color: var(--color-text); }
+.appStateActionSecondary:hover { background: var(--color-surface-raised); }
+.appStateFeedback { margin: 1rem 0; padding: 0.85rem 1rem; border: var(--rule-thin); border-radius: var(--radius-md); color: var(--color-text-muted); line-height: 1.5; }
+.appStateFeedbackError { border-color: color-mix(in oklch, var(--color-danger) 38%, var(--color-border)); background: color-mix(in oklch, var(--color-danger) 7%, var(--color-surface)); color: var(--color-danger); }
+.appStateLoading { display: flex; align-items: center; gap: 0.75rem; color: var(--color-text-muted); }
+.appStateSpinner { width: 1.1rem; height: 1.1rem; border: 2px solid var(--color-border); border-top-color: var(--color-accent); border-radius: 50%; animation: app-spin 0.8s linear infinite; }
 
-.ant-input,
-.ant-input-affix-wrapper,
-.ant-select-selector,
-.ant-segmented {
-  border-width: 1px !important;
-  border-style: solid !important;
-  border-color: var(--color-border) !important;
-  background: var(--color-surface) !important;
-  color: var(--color-text) !important;
-  box-shadow: none !important;
-  outline: 2px solid transparent;
-  outline-offset: 1px;
+.workspaceChoiceList { display: grid; gap: 0.75rem; margin-top: 1.5rem; }
+.workspaceChoice {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border: var(--rule-thin);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  text-align: left;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  cursor: pointer;
 }
+.workspaceChoice:hover { border-color: var(--color-border-strong); background: var(--color-surface-raised); transform: translateY(-1px); }
+.workspaceChoiceName { display: block; font-size: var(--text-lg); font-weight: 650; letter-spacing: -0.025em; }
+.workspaceChoiceMeta { display: block; margin-top: 0.3rem; color: var(--color-text-muted); font-size: var(--text-sm); }
+.workspaceChoiceArrow { color: var(--color-accent); font-size: 1.2rem; }
 
-.ant-input::placeholder,
-.ant-input-affix-wrapper input::placeholder { color: var(--color-text-quiet) !important; opacity: 1; }
-
-.ant-input:focus-visible,
-.ant-input-focused,
-.ant-input-affix-wrapper-focused,
-.ant-select-focused .ant-select-selector {
-  border-color: var(--color-focus) !important;
-  outline: 2px solid var(--color-focus) !important;
-  outline-offset: 1px !important;
-  box-shadow: none !important;
-}
-
-.ant-input-status-error,
-.ant-input-status-error:not(.ant-input-disabled) { border-color: var(--color-danger) !important; }
-.ant-input-status-success,
-.ant-input-status-success:not(.ant-input-disabled) { border-color: var(--color-success) !important; }
-
-.ant-input-disabled,
-.ant-input-affix-wrapper-disabled,
-.ant-select-disabled .ant-select-selector {
-  cursor: not-allowed !important;
-  opacity: 0.52;
-}
-
-.ant-tabs .ant-tabs-tab,
-.ant-tabs .ant-tabs-tab-btn {
-  color: var(--color-text-muted);
-  transition: color var(--dur-fast) var(--ease-out);
-}
-
-.ant-tabs .ant-tabs-tab-active .ant-tabs-tab-btn { color: var(--color-text) !important; }
-.ant-tabs .ant-tabs-ink-bar { background: var(--color-accent); }
-
-@media (hover: hover) {
-  .ant-btn:not(:disabled):hover { color: var(--color-accent) !important; }
-  .ant-btn-primary:not(:disabled):hover {
-    background: color-mix(in oklch, var(--color-accent) 88%, oklch(1 0 0)) !important;
-    color: var(--color-accent-ink) !important;
-  }
-  .ant-input:hover,
-  .ant-input-affix-wrapper:hover,
-  .ant-select-selector:hover { border-color: var(--color-border-strong) !important; }
-  .ant-tabs .ant-tabs-tab:hover .ant-tabs-tab-btn { color: var(--color-text) !important; }
-}
+@keyframes app-spin { to { transform: rotate(360deg); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .ant-btn:not(:disabled):active { transform: none; }
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }

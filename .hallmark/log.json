@@ -2,6 +2,17 @@
   "version": 1,
   "runs": [
     {
+      "date": "2026-10-21",
+      "artifact": "OrbiBots full frontend redesign",
+      "genre": "modern-minimal",
+      "theme": "Coral light",
+      "macrostructure": "Component Playground workbench",
+      "navigation": "N5 compact floating section selector",
+      "footer": "Ft5 state statement",
+      "previousNavigation": "N9 edge-aligned minimal",
+      "note": "Reworked login, workspaces, platform admin and Agent Builder. Preserved API behavior; replaced Ant Design with native controls and CSS Modules. Chat gains fullscreen mode."
+    },
+    {
       "date": "2026-10-17",
       "artifact": "OrbiBots Agent Builder",
       "genre": "modern-minimal",

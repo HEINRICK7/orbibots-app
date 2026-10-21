@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Spin, Typography } from "antd";
 import { useRouter } from "next/navigation";
 import { AccountApiError, getAccount } from "@/lib/account-api";
 export default function HomePage() {
@@ -21,7 +20,10 @@ export default function HomePage() {
     });
     return () => { active = false; };
   }, [router]);
-  return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#111315" }}>
-    <div style={{ textAlign: "center" }}><Spin /><Typography.Paragraph style={{ color: "#a6acb3", marginTop: 16 }}>{message}</Typography.Paragraph></div>
-  </main>;
+  return <main className="appStatePage"><div className="appStateCard">
+    <div className="appStateBrand"><span className="appStateLogo">O</span><span className="appStateBrandName">OrbiBots</span></div>
+    <p className="appStateEyebrow">ACESSO AO WORKSPACE</p>
+    <h1 className="appStateTitle">Preparando seu espaço</h1>
+    <div className="appStateLoading" role="status" aria-live="polite"><span className="appStateSpinner" aria-hidden="true" />{message}</div>
+  </div></main>;
 }

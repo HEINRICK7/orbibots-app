@@ -1,4 +1,56 @@
-.screen { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #111315; }
-.panel { width: min(100%, 440px); display: flex; flex-direction: column; gap: 18px; padding: 36px; border: 1px solid #32363b; border-radius: 14px; background: #191c1f; color: #f2f4f6; }
-.brand { color: #8fb8ff; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
-.note { color: #9ba1a8; font-size: 12px; }
+.screen {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(19rem, 0.88fr) minmax(24rem, 1.12fr);
+  background: var(--color-surface);
+}
+
+.brandPanel {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  background: var(--color-rail);
+  color: var(--color-rail-text);
+}
+
+.brandLockup { position: relative; z-index: 1; display: flex; align-items: center; gap: 0.75rem; font-size: 1.02rem; font-weight: 700; letter-spacing: -0.04em; }
+.brandMark { width: 2.5rem; height: 2.5rem; display: grid; place-items: center; border: 1px solid color-mix(in oklch, var(--color-rail-text) 24%, transparent); border-radius: 0.8rem; background: color-mix(in oklch, var(--color-rail-text) 7%, transparent); color: var(--color-accent); font-size: 1.25rem; }
+.brandMark svg { width: 1.25rem; height: 1.25rem; }
+.brandMessage { position: relative; z-index: 1; width: min(100%, 32rem); margin: auto 0; padding-block: 4rem; }
+.kicker { margin: 0 0 1rem; color: var(--color-text-quiet); font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.09em; }
+.brandPanel .kicker { color: var(--color-rail-muted); }
+.brandMessage h1 { max-width: 11ch; margin: 0; font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 590; letter-spacing: -0.07em; line-height: 0.99; }
+.brandMessage > p:last-child { max-width: 34ch; margin: 1.4rem 0 0; color: var(--color-rail-muted); font-size: var(--text-lg); line-height: 1.65; }
+.brandFoot { position: relative; z-index: 1; color: var(--color-rail-muted); font-size: var(--text-xs); }
+.orbitMark { position: absolute; right: -11rem; bottom: 8%; width: 29rem; height: 29rem; opacity: 0.24; transform: rotate(-22deg); }
+.orbitMark span { position: absolute; inset: 0; border: 1px solid color-mix(in oklch, var(--color-rail-text) 44%, transparent); border-radius: 50%; }
+.orbitMark span:nth-child(2) { transform: rotate(58deg) scaleX(0.55); }
+.orbitMark span:nth-child(3) { transform: rotate(-58deg) scaleX(0.55); }
+
+.accessPanel { display: flex; flex-direction: column; justify-content: center; padding: clamp(2rem, 7vw, 7.5rem); }
+.accessContent { width: min(100%, 27rem); margin: auto; }
+.accessContent h2 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.35rem); font-weight: 650; letter-spacing: -0.06em; }
+.description { margin: 0.9rem 0 1.75rem; color: var(--color-text-muted); line-height: 1.65; }
+.primaryAction { min-height: 3rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 1rem; border: 1px solid var(--color-accent); border-radius: var(--radius-md); background: var(--color-accent); color: var(--color-accent-ink); font-size: var(--text-md); font-weight: 650; text-decoration: none; transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); }
+.primaryAction:hover { background: color-mix(in oklch, var(--color-accent) 89%, var(--color-text)); }
+.primaryAction:active { transform: translateY(1px); }
+.primaryAction span { font-size: 1.2rem; }
+.accessNote { display: flex; align-items: flex-start; gap: 0.65rem; margin-top: 1.25rem; color: var(--color-text-quiet); font-size: var(--text-sm); line-height: 1.5; }
+.accessNote svg { flex: none; margin-top: 0.1rem; color: var(--color-success); }
+.error { display: flex; align-items: center; gap: 0.7rem; margin: 0 0 1rem; padding: 0.8rem 0.9rem; border: 1px solid color-mix(in oklch, var(--color-danger) 34%, var(--color-border)); border-radius: var(--radius-md); background: color-mix(in oklch, var(--color-danger) 7%, var(--color-surface)); color: var(--color-danger); font-size: var(--text-sm); }
+.errorMark { width: 1.25rem; height: 1.25rem; display: grid; place-items: center; flex: none; border-radius: 50%; background: color-mix(in oklch, var(--color-danger) 12%, transparent); font-weight: 700; }
+.footer { width: min(100%, 27rem); margin: 0 auto; padding-top: 1.25rem; border-top: var(--rule-thin); color: var(--color-text-quiet); font-size: var(--text-xs); }
+
+@media (max-width: 780px) {
+  .screen { grid-template-columns: 1fr; }
+  .brandPanel { min-height: 19rem; padding: 1.25rem var(--page-gutter); }
+  .brandMessage { padding-block: 2.5rem 2rem; }
+  .brandMessage h1 { max-width: 17ch; font-size: clamp(2.1rem, 9vw, 3rem); }
+  .brandMessage > p:last-child { max-width: 42ch; margin-top: 0.8rem; font-size: var(--text-md); }
+  .orbitMark { right: -17rem; bottom: -13rem; width: 26rem; height: 26rem; }
+  .accessPanel { min-height: 25rem; padding: 2.5rem var(--page-gutter); }
+  .accessContent { margin-block: 0 auto; }
+}

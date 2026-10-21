@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-21",
+  "framework": "Next.js 15.5.27 App Router",
+  "styling": "CSS Modules and global CSS",
+  "fonts": ["Inter Variable", "IBM Plex Mono"],
+  "paletteBeforeRedesign": "dark OKLCH tokens in tokens.css",
+  "spacing": "4px-based CSS token scale",
+  "motion": "motion-cut; no animation library installed",
+  "preserved": ["Next.js App Router", "font families", "4px spacing scale"],
+  "changedByUserRequest": ["color palette", "component library"]
+}

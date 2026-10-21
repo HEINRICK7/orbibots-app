@@ -1,13 +1,10 @@
 "use client";
 
 import { useState, type ChangeEvent } from "react";
-import { Button, Input, Tag, Typography } from "antd";
 import type { ApiOperation } from "../application/api-operation";
 import type { SourceConnectionResponse, SpecialistResponse } from "../domain/api-contracts";
 import { Glyph } from "./Glyph";
 import styles from "./AgentBuilder.module.css";
-
-const { TextArea } = Input;
 
 interface RevisionCandidate {
   revisionId: string;
@@ -49,56 +46,57 @@ export function KnowledgeTab(props: KnowledgeTabProps) {
     <div className={styles.tabContent}>
       <div className={styles.sectionHeading}>
         <div>
-          <Typography.Title level={5}>Conhecimento</Typography.Title>
-          <Typography.Paragraph>Envie fontes que o backend consiga ingerir e indexar para uma revisão candidata.</Typography.Paragraph>
+          <h3>Conhecimento</h3>
+          <p>Envie fontes que o backend consiga ingerir e indexar para uma revisão candidata.</p>
         </div>
-        <Tag className={props.specialist ? styles.localTag : styles.pendingTag}>
+        <span className={props.specialist ? styles.localTag : styles.pendingTag}>
           {props.specialist ? "ESPECIALISTA DA API SELECIONADO" : "CRIE UM ESPECIALISTA PRIMEIRO"}
-        </Tag>
+        </span>
       </div>
 
       <section className={styles.knowledgeSection} aria-labelledby="text-document-heading">
         <div className={styles.sourceHeading}>
           <div>
-            <Typography.Title id="text-document-heading" level={5}>Documento de texto</Typography.Title>
-            <Typography.Text className={styles.fieldHelp}>MARKDOWN é aceito pelo endpoint. O conteúdo será enviado ao backend nesta solicitação.</Typography.Text>
+            <h4 id="text-document-heading">Documento de texto</h4>
+            <span className={styles.fieldHelp}>MARKDOWN é aceito pelo endpoint. O conteúdo será enviado ao backend nesta solicitação.</span>
           </div>
         </div>
         <div className={styles.formPair}>
           <label className={styles.textField}>
             <span className={styles.fieldLabel}>Chave do documento</span>
-            <Input value={documentKey} onChange={(event) => setDocumentKey(event.target.value)} placeholder="faq-entrega" maxLength={120} />
+            <input className={styles.textInput} value={documentKey} onChange={(event) => setDocumentKey(event.target.value)} placeholder="faq-entrega" maxLength={120} />
           </label>
           <label className={styles.textField}>
             <span className={styles.fieldLabel}>Título</span>
-            <Input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="FAQ de entrega" maxLength={160} />
+            <input className={styles.textInput} value={title} onChange={(event) => setTitle(event.target.value)} placeholder="FAQ de entrega" maxLength={160} />
           </label>
         </div>
         <label className={styles.textField}>
           <span className={styles.fieldLabel}>Conteúdo Markdown</span>
-          <TextArea
+          <textarea
+            className={styles.textArea}
             value={content}
             onChange={(event) => setContent(event.target.value)}
             placeholder="## Entrega\nDescreva somente informações que devem compor a base de conhecimento."
-            autoSize={{ minRows: 5, maxRows: 10 }}
+            rows={6}
           />
         </label>
-        <Button
-          type="primary"
-          icon={<Glyph name="cloud" />}
-          loading={props.busyOperation === "document-text"}
+        <button
+          className={styles.primaryButton}
+          type="button"
+          aria-busy={props.busyOperation === "document-text"}
           disabled={!canWrite || props.uncertainOperations.has("document-text") || !documentKey.trim() || !title.trim() || !content.trim()}
           onClick={() => void props.onIngestText({ documentKey: documentKey.trim(), title: title.trim(), content })}
         >
-          Enviar texto ao backend
-        </Button>
+          <Glyph name="cloud" /> {props.busyOperation === "document-text" ? "Enviando texto…" : "Enviar texto ao backend"}
+        </button>
       </section>
 
       <section className={styles.knowledgeSection} aria-labelledby="file-heading">
         <div className={styles.sourceHeading}>
           <div>
-            <Typography.Title id="file-heading" level={5}>Enviar arquivo</Typography.Title>
-            <Typography.Text className={styles.fieldHelp}>MD, TXT, PDF ou DOCX · limite confirmado pelo backend: 5 MiB.</Typography.Text>
+            <h4 id="file-heading">Enviar arquivo</h4>
+            <span className={styles.fieldHelp}>MD, TXT, PDF ou DOCX · limite confirmado pelo backend: 5 MiB.</span>
           </div>
         </div>
         <label className={styles.filePicker}>
@@ -111,31 +109,33 @@ export function KnowledgeTab(props: KnowledgeTabProps) {
       <section className={styles.knowledgeSection} aria-labelledby="catalog-heading">
         <div className={styles.sourceHeading}>
           <div>
-            <Typography.Title id="catalog-heading" level={5}>Catálogo Doces &amp; Sonhos</Typography.Title>
-            <Typography.Text className={styles.fieldHelp}>Esta fonte é suportada pelo backend. A sincronização retorna uma revisão candidata.</Typography.Text>
+            <h4 id="catalog-heading">Catálogo Doces &amp; Sonhos</h4>
+            <span className={styles.fieldHelp}>Esta fonte é suportada pelo backend. A sincronização retorna uma revisão candidata.</span>
           </div>
         </div>
         {!props.source ? (
-          <Button
-            icon={<Glyph name="link" />}
-            loading={props.busyOperation === "source-create"}
+          <button
+            className={styles.secondaryButton}
+            type="button"
+            aria-busy={props.busyOperation === "source-create"}
             disabled={!canWrite || props.uncertainOperations.has("source-create")}
             onClick={props.onCreateSource}
           >
-            Conectar catálogo público
-          </Button>
+            <Glyph name="link" /> {props.busyOperation === "source-create" ? "Conectando…" : "Conectar catálogo público"}
+          </button>
         ) : (
           <div className={styles.apiResult}>
             <span>Source ID</span><code>{props.source.sourceId}</code>
             <span>Status retornado</span><code>{props.source.status}</code>
-            <Button
-              icon={<Glyph name="refresh" />}
-              loading={props.busyOperation === "source-sync"}
+            <button
+              className={styles.secondaryButton}
+              type="button"
+              aria-busy={props.busyOperation === "source-sync"}
               disabled={!canWrite || props.uncertainOperations.has("source-sync")}
               onClick={props.onSyncSource}
             >
-              Sincronizar catálogo
-            </Button>
+              <Glyph name="refresh" /> {props.busyOperation === "source-sync" ? "Sincronizando…" : "Sincronizar catálogo"}
+            </button>
           </div>
         )}
       </section>
@@ -143,13 +143,12 @@ export function KnowledgeTab(props: KnowledgeTabProps) {
       {props.candidate ? (
         <div className={styles.revisionCard}>
           <div className={styles.fieldTitleRow}>
-            <Typography.Text strong>Revisão retornada pela API</Typography.Text>
-            <Tag className={styles.draftTag}>{props.candidate.status.toUpperCase()}</Tag>
+            <span className={styles.fieldTitleRow}><strong>Revisão retornada pela API</strong><span className={styles.draftTag}>{props.candidate.status.toUpperCase()}</span></span>
           </div>
           <code>{props.candidate.revisionId}</code>
-          <Typography.Text className={styles.fieldHelp}>
+          <span className={styles.fieldHelp}>
             {props.candidate.itemCount} {props.candidate.itemLabel} · source {props.candidate.sourceId}
-          </Typography.Text>
+          </span>
         </div>
       ) : (
         <div className={styles.emptySource}>Nenhuma ingestão foi confirmada nesta sessão.</div>

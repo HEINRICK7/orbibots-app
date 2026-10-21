@@ -1,6 +1,5 @@
 "use client";
 
-import { Button, Input, Tag, Typography } from "antd";
 import type { ApiOperation } from "../application/api-operation";
 import type { SpecialistResponse, TenantMembershipResponse } from "../domain/api-contracts";
 import { Glyph } from "./Glyph";
@@ -24,10 +23,10 @@ export function IdentityTab(props: IdentityTabProps) {
     <div className={styles.tabContent}>
       <div className={styles.sectionHeading}>
         <div>
-          <Typography.Title level={5}>Empresa e especialista</Typography.Title>
-          <Typography.Paragraph>Empresa e papel vieram da sessão validada pelo backend.</Typography.Paragraph>
+          <h3>Empresa e especialista</h3>
+          <p>Empresa e papel vieram da sessão validada pelo backend.</p>
         </div>
-        <Tag className={styles.localTag}>WORKSPACE VALIDADO</Tag>
+        <span className={styles.localTag}>WORKSPACE VALIDADO</span>
       </div>
 
       <div className={styles.identityBlock}>
@@ -42,10 +41,12 @@ export function IdentityTab(props: IdentityTabProps) {
       <div className={styles.identityBlock}>
         <div className={styles.fieldTitleRow}>
           <label className={styles.fieldLabel} htmlFor="specialist-name">Nome do especialista</label>
-          <Typography.Text className={styles.fieldHelp}>Este campo é persistido pelo endpoint real de criação.</Typography.Text>
+          <span className={styles.fieldHelp}>Este campo é persistido pelo endpoint real de criação.</span>
         </div>
-        <Input
+        <input
+          className={styles.textInput}
           id="specialist-name"
+          type="text"
           value={props.specialistName}
           onChange={(event) => props.onSpecialistNameChange(event.target.value)}
           placeholder="Ex.: Consultor de produtos"
@@ -53,23 +54,24 @@ export function IdentityTab(props: IdentityTabProps) {
           disabled={Boolean(props.specialist)}
         />
         <div className={styles.actionPair}>
-          <Button
-            type="primary"
-            icon={<Glyph name="plus" />}
+          <button
+            className={styles.primaryButton}
+            type="button"
             onClick={props.onCreateSpecialist}
-            loading={props.busyOperation === "specialist-create" && props.specialistName.trim() !== "Personal Tech Agent"}
+            aria-busy={props.busyOperation === "specialist-create" && props.specialistName.trim() !== "Personal Tech Agent"}
             disabled={!props.sessionReady || Boolean(props.specialist) || specialistLocked || !props.specialistName.trim()}
           >
-            Criar especialista
-          </Button>
-          <Button
-            icon={<Glyph name="robot" />}
+            <Glyph name="plus" /> {props.busyOperation === "specialist-create" ? "Criando…" : "Criar especialista"}
+          </button>
+          <button
+            className={styles.secondaryButton}
+            type="button"
             onClick={props.onPreparePersonalChat}
-            loading={props.busyOperation !== null && !props.specialist}
+            aria-busy={props.busyOperation !== null && !props.specialist}
             disabled={!props.sessionReady || Boolean(props.specialist) || specialistLocked}
           >
-            Abrir chat técnico
-          </Button>
+            <Glyph name="robot" /> {props.busyOperation !== null && !props.specialist ? "Preparando…" : "Abrir chat técnico"}
+          </button>
         </div>
         {props.specialist && (
           <div className={styles.apiResult}>

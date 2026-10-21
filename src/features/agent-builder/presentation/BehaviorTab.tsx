@@ -1,4 +1,3 @@
-import { Tag, Typography } from "antd";
 import { Glyph } from "./Glyph";
 import styles from "./AgentBuilder.module.css";
 
@@ -7,18 +6,18 @@ export function BehaviorTab() {
     <div className={styles.tabContent}>
       <div className={styles.sectionHeading}>
         <div>
-          <Typography.Title level={5}>Comportamento</Typography.Title>
-          <Typography.Paragraph>Personalidade, instruções e regras de atendimento do especialista.</Typography.Paragraph>
+          <h3>Comportamento</h3>
+          <p>Personalidade, instruções e regras de atendimento do especialista.</p>
         </div>
-        <Tag className={styles.pendingTag}>AGUARDANDO CONTRATO</Tag>
+        <span className={styles.pendingTag}>AGUARDANDO CONTRATO</span>
       </div>
       <div className={styles.unavailableFeature}>
         <span className={styles.toolIcon}><Glyph name="settings" /></span>
         <div>
-          <Typography.Text strong>Configuração ainda não persistível</Typography.Text>
-          <Typography.Paragraph>
+          <strong>Configuração ainda não persistível</strong>
+          <p>
             A API atual cria o especialista somente com nome. Não há endpoint para editar personalidade, instruções, idioma, regras ou prompt; por isso estes campos não aparecem como se fossem salvos.
-          </Typography.Paragraph>
+          </p>
         </div>
       </div>
       <div className={styles.inlineNotice}>

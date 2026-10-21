@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Alert, Button, Spin, Typography } from "antd";
 import { useRouter } from "next/navigation";
 import { AgentBuilder } from "@/features/agent-builder/presentation/AgentBuilder";
 import type { TenantMembershipResponse } from "@/features/agent-builder/domain/api-contracts";
@@ -36,8 +35,8 @@ export default function WorkspaceEntry({ tenantId }: { tenantId: string }) {
     return () => { active = false; };
   }, [router, tenantId]);
   if (workspace) return <AgentBuilder workspace={workspace} />;
-  return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#111315", padding: 24 }}>
-    {error ? <section><Alert type="error" showIcon message={error} /><Button href="/workspace" style={{ marginTop: 16 }}>Voltar aos workspaces</Button></section>
-      : <div style={{ textAlign: "center" }}><Spin /><Typography.Paragraph style={{ color: "#9ba1a8" }}>Validando membership no backend...</Typography.Paragraph></div>}
+  return <main className="appStatePage">
+    {error ? <section className="appStateCard" role="alert"><p className="appStateEyebrow">ACESSO AO WORKSPACE</p><h1 className="appStateTitle">Não foi possível abrir esta empresa</h1><p className="appStateCopy">{error}</p><a className="appStateAction appStateActionSecondary" href="/workspace">Voltar aos workspaces</a></section>
+      : <section className="appStateCard"><div className="appStateBrand"><span className="appStateLogo">O</span><span className="appStateBrandName">OrbiBots</span></div><div className="appStateLoading" role="status" aria-live="polite"><span className="appStateSpinner" aria-hidden="true" />Validando seu acesso no backend…</div></section>}
   </main>;
 }

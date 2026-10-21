@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, ConfigProvider, Tabs, Tag, Typography, theme } from "antd";
 import {
   createDocesProductsSource,
   createSpecialist,
@@ -35,8 +34,6 @@ import { Playground } from "./Playground";
 import { PublicationTab } from "./PublicationTab";
 import { ToolsTab } from "./ToolsTab";
 import styles from "./AgentBuilder.module.css";
-
-const { Text } = Typography;
 
 type BuilderTab = "identity" | "knowledge" | "behavior" | "tools" | "publication";
 type RevisionCandidate = {
@@ -356,90 +353,101 @@ export function AgentBuilder({ workspace }: { workspace: TenantMembershipRespons
     workspace, specialistName, specialist, busyOperation, uncertainOperations,
     source, candidate, publication, specialistVersion,
   ]);
+  const activeTabPosition = tabItems.findIndex((item) => item.key === activeTab) + 1;
+
+  const apiStatusLabel = apiState === "ok" ? "Workspace validado" : apiState === "error" ? "Falha na última chamada" : "API não verificada";
 
   return (
-    <ConfigProvider theme={{ algorithm: theme.darkAlgorithm, token: { fontFamily: "Inter Variable, Inter, sans-serif", borderRadius: 9 } }}>
-      <main className={styles.appShell}>
-        <header className={styles.topbar}>
-          <div className={styles.brandGroup}>
-            <span className={styles.brandMark}><Glyph name="robot" /></span>
-            <Text className={styles.brandName}>OrbiBots</Text>
-            <span className={styles.brandDivider} />
-            <Text className={styles.productName}>Agent Studio</Text>
-          </div>
-          <div className={styles.topbarRight}>
-            <Tag className={apiState === "ok" ? styles.localTag : styles.pendingTag}>
-              <span className={styles.statusDot} />{apiState === "ok" ? "Sessão validada" : apiState === "error" ? "Última chamada com erro" : "API não verificada"}
-            </Tag>
-            <div className={styles.sessionIdentity}>
-              <span>{workspace.tenantName} · {workspace.role === "TENANT_ADMIN" ? "Admin da empresa" : "Editor de agentes"}</span>
-              <Button type="text" href="/workspace">Trocar empresa</Button>
-              <Button type="text" href="/api/auth/logout">Sair</Button>
-            </div>
-          </div>
-        </header>
-
-        <div className={styles.builderBar}>
-          <div className={styles.builderHeading}>
-            <div className={styles.breadcrumb}>{workspace.tenantName} <span>/</span> Agent Builder</div>
-            <div className={styles.titleLine}>
-              <Typography.Title level={4}>{specialist?.name ?? "Novo especialista"}</Typography.Title>
-              <Tag className={specialist ? styles.localTag : styles.draftTag}>
-                {specialist ? `API · ${specialist.status}` : "Sem especialista"}
-              </Tag>
-            </div>
+    <main className={styles.appShell}>
+      <header className={styles.topbar}>
+        <a className={styles.brandGroup} href="/" aria-label="OrbiBots Studio, início">
+          <span className={styles.brandMark}><Glyph name="robot" /></span>
+          <span className={styles.brandName}>OrbiBots</span>
+          <span className={styles.productName}>STUDIO</span>
+        </a>
+        <div className={styles.topbarRight}>
+          <span className={`${styles.localTag} ${apiState === "error" ? styles.errorTag : ""}`}><span className={styles.statusDot} />{apiStatusLabel}</span>
+          <div className={styles.sessionIdentity}>
+            <span className={styles.workspaceIdentity}><span className={styles.workspaceAvatar}>{workspace.tenantName.trim().slice(0, 1).toUpperCase()}</span><span><strong>{workspace.tenantName}</strong><small>{workspace.role === "TENANT_ADMIN" ? "Admin da empresa" : "Editor de agentes"}</small></span></span>
+            <a href="/workspace" className={styles.headerLink}>Trocar empresa</a>
+            <a href="/api/auth/logout" className={styles.headerLink}>Sair</a>
           </div>
         </div>
+      </header>
 
-        {(apiError || localError) && (
-          <div className={styles.errorStrip}>
-            <Alert
-              type="error"
-              showIcon
-              message={apiError ? `HTTP ${apiError.status ?? "sem resposta"} · ${apiError.code ?? "erro_api"}` : "Ação não enviada"}
-              description={apiError
-                ? <>{apiError.message}{apiError.correlationId && <span className={styles.correlationId}> · Correlação: {apiError.correlationId}</span>}</>
-                : localError}
-              closable
-              onClose={() => { setApiError(null); setLocalError(null); }}
-            />
+      <section className={styles.builderBar}>
+        <div className={styles.builderHeading}>
+          <div className={styles.breadcrumb}><span>{workspace.tenantName}</span><span aria-hidden="true">/</span><span>Agent Studio</span></div>
+          <div className={styles.titleLine}>
+            <h1>{specialist?.name ?? "Novo especialista"}</h1>
+            <span className={specialist ? styles.localTag : styles.draftTag}>{specialist ? `API · ${specialist.status}` : "Sem especialista"}</span>
           </div>
-        )}
-
-        <div className={styles.workspace}>
-          <section className={styles.editorPane} aria-label="Configuração do especialista">
-            <Tabs
-              className={styles.builderTabs}
-              activeKey={activeTab}
-              onChange={(key) => setActiveTab(key as BuilderTab)}
-              items={tabItems}
-              destroyOnHidden={false}
-              animated={false}
-            />
-          </section>
-          <Playground
-            agentName={specialist?.name ?? "Especialista ainda não criado"}
-            specialistId={specialist?.id ?? null}
-            publishedRevisionId={publication?.revisionId ?? null}
-            conversation={conversation}
-            messages={messages}
-            sessionReady={true}
-            busyOperation={busyOperation}
-            uncertainOperations={uncertainOperations}
-            pendingChatText={pendingChat?.text ?? null}
-            onStartConversation={handleStartConversation}
-            onSend={handleSendMessage}
-          />
         </div>
+        <div className={styles.builderIntro}><span className={styles.eyebrow}>CONFIGURE E TESTE</span><p>As alterações só são confirmadas quando a API responde.</p></div>
+      </section>
 
-        <footer className={styles.footerLine}>
-          <span>OrbiBots Studio</span>
-          <span className={styles.footerDivider}>·</span>
-          <span>Estados confirmados vêm da API; campos ainda não enviados ficam em memória e não são restaurados ao recarregar.</span>
-          <span className={styles.footerSpacer} />
-          <span className={styles.footerVersion}>V1 · API /api/v1</span>
-        </footer>
-      </main>
-    </ConfigProvider>
+      {(apiError || localError) && (
+        <div className={styles.errorStrip} role="alert">
+          <span className={styles.errorMark}>!</span>
+          <div className={styles.errorCopy}>
+            <strong>{apiError ? `HTTP ${apiError.status ?? "sem resposta"} · ${apiError.code ?? "erro_api"}` : "Ação não enviada"}</strong>
+            <span>{apiError ? apiError.message : localError}</span>
+            {apiError?.correlationId && <code className={styles.correlationId}>Correlação: {apiError.correlationId}</code>}
+          </div>
+          <button className={styles.dismissButton} type="button" aria-label="Fechar aviso" onClick={() => { setApiError(null); setLocalError(null); }}>×</button>
+        </div>
+      )}
+
+      <div className={styles.workspace}>
+        <section className={styles.editorPane} aria-label="Configuração do especialista">
+          <div className={styles.editorTopline}><div><span className={styles.eyebrow}>BUILDER</span><h2>Configuração</h2></div><span className={styles.editorStep} aria-label={`Etapa ${activeTabPosition} de ${tabItems.length}`}>{String(activeTabPosition).padStart(2, "0")} <i>/</i> {String(tabItems.length).padStart(2, "0")}</span></div>
+          <nav className={styles.builderTabs} role="tablist" aria-label="Seções de configuração">
+            {tabItems.map((item, index) => (
+              <button
+                key={item.key}
+                id={`tab-${item.key}`}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === item.key}
+                aria-controls={`panel-${item.key}`}
+                className={`${styles.tabButton} ${activeTab === item.key ? styles.tabButtonActive : ""}`}
+                onClick={() => setActiveTab(item.key as BuilderTab)}
+              >
+                {item.label}<span className={styles.tabIndex}>{String(index + 1).padStart(2, "0")}</span>
+              </button>
+            ))}
+          </nav>
+          <div className={styles.tabPanels}>
+            {tabItems.map((item) => <section
+              key={item.key}
+              id={`panel-${item.key}`}
+              role="tabpanel"
+              aria-labelledby={`tab-${item.key}`}
+              hidden={activeTab !== item.key}
+              className={styles.tabPanel}
+            >{item.children}</section>)}
+          </div>
+        </section>
+        <Playground
+          agentName={specialist?.name ?? "Especialista ainda não criado"}
+          specialistId={specialist?.id ?? null}
+          publishedRevisionId={publication?.revisionId ?? null}
+          conversation={conversation}
+          messages={messages}
+          sessionReady={true}
+          busyOperation={busyOperation}
+          uncertainOperations={uncertainOperations}
+          pendingChatText={pendingChat?.text ?? null}
+          onStartConversation={handleStartConversation}
+          onSend={handleSendMessage}
+        />
+      </div>
+
+      <footer className={styles.footerLine}>
+        <span className={styles.footerMark}><Glyph name="info" /></span>
+        <span>Estado confirmado pela API. Campos ainda não enviados permanecem apenas nesta sessão.</span>
+        <span className={styles.footerVersion}>ORBITBOTS STUDIO <i>·</i> API /api/v1</span>
+      </footer>
+    </main>
   );
 }

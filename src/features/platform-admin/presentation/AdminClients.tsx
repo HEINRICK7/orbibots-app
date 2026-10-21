@@ -1,12 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Button, Card, ConfigProvider, Input, Spin, Table, Tag, Typography, theme } from "antd";
-import type { ColumnsType } from "antd/es/table";
 import { useRouter } from "next/navigation";
 import type { CompanySummary } from "@/features/agent-builder/domain/api-contracts";
 import { getAccount } from "@/lib/account-api";
 import type { TenantMembershipResponse } from "@/features/agent-builder/domain/api-contracts";
 import { AdminApiError, createCompany, inviteOwner, listCompanies } from "../infrastructure/admin-api";
+import { Glyph } from "@/features/agent-builder/presentation/Glyph";
 import styles from "./AdminClients.module.css";
 
 export function AdminClients() {
@@ -96,86 +95,91 @@ export function AdminClients() {
     }
   }
 
-  const columns: ColumnsType<CompanySummary> = [
-    { title: "Empresa", dataIndex: "name", key: "name", render: (value: string) => <span className={styles.company}>{value}</span> },
-    { title: "Segmento", dataIndex: "segment", key: "segment" },
-    { title: "Responsável", dataIndex: "ownerEmail", key: "ownerEmail", render: (value: string | null) => value || <span className={styles.muted}>Ainda não convidado</span> },
-    { title: "Convite", dataIndex: "invitationStatus", key: "invitationStatus", render: (value: string | null) => <InvitationTag status={value} /> },
-    { title: "Conta", dataIndex: "status", key: "status", render: (value: string) => <Tag>{accountLabel(value)}</Tag> },
-    { title: "Ação", key: "action", render: (_value, record) => record.ownerEmail
-      ? <Button size="small" disabled={saving} onClick={() => void deliverInvitation(record.id, record.ownerEmail!, crypto.randomUUID())}>Reenviar convite</Button>
-      : null },
-  ];
   const ready = Boolean(name.trim() && segment.trim() && email.trim());
 
   return (
-    <ConfigProvider theme={{ algorithm: theme.darkAlgorithm, token: { fontFamily: "Inter Variable, Inter, sans-serif", borderRadius: 10, colorPrimary: "#7eb6e6" } }}>
-      <main className={styles.screen}>
-        <header className={styles.topbar}>
-          <div className={styles.brand}>
-            <span className={styles.mark} aria-hidden="true">O</span>
-            <div>
-              <p className={styles.kicker}>OrbiBots</p>
-              <h1 className={styles.title}>Empresas</h1>
-            </div>
-          </div>
-          <div className={styles.topActions}>
-            {workspaces.map((workspace) => (
-              <Button key={workspace.tenantId} type="primary" href={"/workspace/" + workspace.tenantId}>Abrir chat</Button>
-            ))}
-            <Button className={styles.logout} href="/api/auth/logout">Sair</Button>
-          </div>
-        </header>
-        {error && <Alert type="error" showIcon message={error} closable onClose={() => setError("")} />}
-        {notice && <Alert type="success" showIcon message={notice} closable onClose={() => setNotice("")} />}
-        <div className={styles.workspace}>
-          <Card className={styles.panel} title="Nova empresa">
-            <form ref={createFormRef} className={styles.form} onSubmit={(event) => void handleCreate(event)}>
-              <label className={styles.field}>Empresa
-                <Input value={name} onChange={(event) => setName(event.target.value)} maxLength={200} required disabled={saving || Boolean(pendingCompany)} placeholder="Nome da empresa" />
-              </label>
-              <label className={styles.field}>Segmento
-                <Input value={segment} onChange={(event) => setSegment(event.target.value)} maxLength={120} required disabled={saving || Boolean(pendingCompany)} placeholder="Ex.: Confeitaria" />
-              </label>
-              <label className={styles.field}>E-mail do responsável
-                <Input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={320} required disabled={saving || Boolean(pendingCompany)} placeholder="responsavel@empresa.com" />
-              </label>
-              <Button className={styles.submit} type="primary" htmlType="submit" loading={saving} disabled={saving || Boolean(pendingCompany) || !ready}>Criar empresa</Button>
-              <p className={styles.help}>O Cognito envia o convite com senha temporária. No primeiro acesso a pessoa cria a senha e o MFA. WhatsApp ainda não está conectado.</p>
-            </form>
-            {pendingCompany && <div className={styles.retry}>
-              <Typography.Text>Não foi possível confirmar a criação. Repetir usa a mesma chave para evitar uma empresa duplicada.</Typography.Text>
-              <Button onClick={() => createFormRef.current?.requestSubmit()} loading={saving}>Tentar novamente</Button>
-            </div>}
-            {pendingInvite && <div className={styles.retry}>
-              <Typography.Text>O convite de {pendingInvite.email} ainda não foi confirmado. A mesma chave não dispara um segundo e-mail enquanto o pedido estiver pendente.</Typography.Text>
-              <Button onClick={() => void deliverInvitation(pendingInvite.tenantId, pendingInvite.email, pendingInvite.key)} loading={saving}>Verificar solicitação</Button>
-            </div>}
-          </Card>
-          <section className={styles.panel}>
-            <div className={styles.panelBody}>
-              <div className={styles.listHead}>
-                <h2 className={styles.listTitle}>Cadastradas</h2>
-                <span className={styles.count}>{loading ? "Consultando" : total === 1 ? "1 empresa" : `${total} empresas`}</span>
-                <Button onClick={() => void refresh(0)} disabled={loading}>Atualizar</Button>
-              </div>
-              {loading ? <Spin /> : companies.length === 0 ? (
-                <div className={styles.empty}>
-                  <p className={styles.emptyTitle}>Nenhuma empresa ainda</p>
-                  <p className={styles.emptyText}>A primeira que você criar aparece aqui, com o responsável e o estado do convite.</p>
-                </div>
-              ) : (
-                <Table<CompanySummary> className={styles.table} rowKey="id" columns={columns} dataSource={companies} pagination={false} scroll={{ x: 680 }} />
-              )}
-              {total > 20 && <div className={styles.pagination}>
-                <Button disabled={loading || page === 0} onClick={() => void refresh(page - 1)}>Anterior</Button>
-                <Button disabled={loading || (page + 1) * 20 >= total} onClick={() => void refresh(page + 1)}>Próxima</Button>
-              </div>}
-            </div>
-          </section>
+    <main className={styles.screen}>
+      <header className={styles.topbar}>
+        <a className={styles.brand} href="/" aria-label="OrbiBots, início">
+          <span className={styles.mark}><Glyph name="robot" /></span>
+          <span><small className={styles.kicker}>ORBITBOTS</small><strong className={styles.title}>Console de empresas</strong></span>
+        </a>
+        <div className={styles.topActions}>
+          {workspaces.map((workspace) => <a key={workspace.tenantId} className={styles.workspaceAction} href={"/workspace/" + workspace.tenantId}>Abrir {workspace.tenantName}</a>)}
+          <a className={styles.logout} href="/api/auth/logout">Sair</a>
         </div>
-      </main>
-    </ConfigProvider>
+      </header>
+
+      <section className={styles.pageIntro}>
+        <div><p className={styles.kicker}>ADMINISTRAÇÃO DA PLATAFORMA</p><h1>Empresas</h1><p>Crie um workspace e convide o primeiro administrador da empresa.</p></div>
+        <span className={styles.accessLabel}><i /> Acesso de plataforma</span>
+      </section>
+
+      {error && <div className={`${styles.feedback} ${styles.feedbackError}`} role="alert"><span className={styles.feedbackIcon}>!</span><span>{error}</span><button type="button" onClick={() => setError("")} aria-label="Fechar aviso">×</button></div>}
+      {notice && <div className={`${styles.feedback} ${styles.feedbackSuccess}`} role="status"><span className={styles.feedbackIcon}>✓</span><span>{notice}</span><button type="button" onClick={() => setNotice("")} aria-label="Fechar aviso">×</button></div>}
+
+      <div className={styles.workspace}>
+        <section className={styles.panel} aria-labelledby="create-company-title">
+          <div className={styles.panelHeading}><span className={styles.sectionNumber}>01</span><div><h2 id="create-company-title">Nova empresa</h2><p>Os dados são enviados ao backend no envio do formulário.</p></div></div>
+          <form ref={createFormRef} className={styles.form} onSubmit={(event) => void handleCreate(event)}>
+            <label className={styles.field}>Empresa
+              <input className={styles.input} value={name} onChange={(event) => setName(event.target.value)} maxLength={200} required disabled={saving || Boolean(pendingCompany)} placeholder="Nome da empresa" />
+            </label>
+            <label className={styles.field}>Segmento
+              <input className={styles.input} value={segment} onChange={(event) => setSegment(event.target.value)} maxLength={120} required disabled={saving || Boolean(pendingCompany)} placeholder="Ex.: Tecnologia" />
+            </label>
+            <label className={styles.field}>E-mail do responsável
+              <input className={styles.input} type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={320} required disabled={saving || Boolean(pendingCompany)} placeholder="responsavel@empresa.com" />
+            </label>
+            <button className={styles.submit} type="submit" aria-busy={saving} disabled={saving || Boolean(pendingCompany) || !ready}>
+              <Glyph name="plus" /> {saving ? "Salvando…" : "Criar empresa e convidar"}
+            </button>
+            <p className={styles.help}>O convite usa o Cognito. A senha temporária e o MFA são tratados no primeiro acesso. WhatsApp ainda não está conectado.</p>
+          </form>
+          {pendingCompany && <div className={styles.retry}>
+            <p>Não foi possível confirmar a criação. A tentativa usa a mesma chave para evitar uma empresa duplicada.</p>
+            <button className={styles.secondaryButton} type="button" onClick={() => createFormRef.current?.requestSubmit()} disabled={saving}>Tentar novamente</button>
+          </div>}
+          {pendingInvite && <div className={styles.retry}>
+            <p>O convite de <strong>{pendingInvite.email}</strong> ainda não foi confirmado. Repetir mantém a mesma chave.</p>
+            <button className={styles.secondaryButton} type="button" onClick={() => void deliverInvitation(pendingInvite.tenantId, pendingInvite.email, pendingInvite.key)} disabled={saving}>{saving ? "Verificando…" : "Verificar solicitação"}</button>
+          </div>}
+        </section>
+
+        <section className={`${styles.panel} ${styles.companyPanel}`} aria-labelledby="companies-title" aria-busy={loading}>
+          <div className={styles.listHead}>
+            <div><p className={styles.kicker}>DIRETÓRIO</p><h2 id="companies-title">Empresas cadastradas</h2></div>
+            <div className={styles.listActions}><span className={styles.count}>{loading ? "Consultando" : total === 1 ? "1 empresa" : `${total} empresas`}</span><button className={styles.secondaryButton} type="button" onClick={() => void refresh(0)} disabled={loading}><Glyph name="refresh" /> Atualizar</button></div>
+          </div>
+          {loading ? <div className={styles.loading} role="status"><span className={styles.spinner} />Carregando empresas…</div> : companies.length === 0 ? (
+            <div className={styles.empty}>
+              <span className={styles.emptyMark}><Glyph name="building" /></span>
+              <p className={styles.emptyTitle}>Nenhuma empresa ainda</p>
+              <p className={styles.emptyText}>A primeira que você criar aparece aqui, com o responsável e o estado do convite.</p>
+            </div>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <caption className={styles.srOnly}>Empresas cadastradas e situação do convite</caption>
+                <thead><tr><th scope="col">Empresa</th><th scope="col">Segmento</th><th scope="col">Responsável</th><th scope="col">Convite</th><th scope="col">Conta</th><th scope="col"><span className={styles.srOnly}>Ações</span></th></tr></thead>
+                <tbody>{companies.map((company: CompanySummary) => <tr key={company.id}>
+                  <td><span className={styles.company}>{company.name}</span></td>
+                  <td>{company.segment}</td>
+                  <td>{company.ownerEmail || <span className={styles.muted}>Ainda não convidado</span>}</td>
+                  <td><InvitationTag status={company.invitationStatus} /></td>
+                  <td><span className={styles.accountTag}>{accountLabel(company.status)}</span></td>
+                  <td>{company.ownerEmail && <button className={styles.rowAction} type="button" aria-label={`Reenviar convite para ${company.name}`} disabled={saving} onClick={() => void deliverInvitation(company.id, company.ownerEmail!, crypto.randomUUID())}>Reenviar convite</button>}</td>
+                </tr>)}</tbody>
+              </table>
+            </div>
+          )}
+          {total > 20 && <div className={styles.pagination}>
+            <span>Página {page + 1} de {Math.ceil(total / 20)}</span>
+            <div><button className={styles.secondaryButton} type="button" disabled={loading || page === 0} onClick={() => void refresh(page - 1)}>Anterior</button><button className={styles.secondaryButton} type="button" disabled={loading || (page + 1) * 20 >= total} onClick={() => void refresh(page + 1)}>Próxima</button></div>
+          </div>}
+        </section>
+      </div>
+    </main>
   );
 }
 
@@ -186,9 +190,9 @@ function accountLabel(status: string) {
 }
 
 function InvitationTag({ status }: { status: string | null }) {
-  if (!status) return <Tag>Sem convite</Tag>;
-  if (status === "SENT") return <Tag color="green">Solicitado</Tag>;
-  if (status === "FAILED") return <Tag color="red">Falhou</Tag>;
-  if (status === "PENDING") return <Tag color="gold">Pendente</Tag>;
-  return <Tag>{status}</Tag>;
+  if (!status) return <span className={styles.invitationTag}>Sem convite</span>;
+  if (status === "SENT") return <span className={`${styles.invitationTag} ${styles.invitationSent}`}>Solicitado</span>;
+  if (status === "FAILED") return <span className={`${styles.invitationTag} ${styles.invitationFailed}`}>Falhou</span>;
+  if (status === "PENDING") return <span className={`${styles.invitationTag} ${styles.invitationPending}`}>Pendente</span>;
+  return <span className={styles.invitationTag}>{status}</span>;
 }

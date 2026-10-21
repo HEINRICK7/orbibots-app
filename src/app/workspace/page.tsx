@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Button, Card, Spin, Typography } from "antd";
 import { useRouter } from "next/navigation";
 import type { TenantMembershipResponse } from "@/features/agent-builder/domain/api-contracts";
 import { AccountApiError, getAccount } from "@/lib/account-api";
@@ -19,15 +18,20 @@ export default function WorkspaceChooser() {
       else setError(reason instanceof Error ? reason.message : "Não foi possível carregar os workspaces.");
     });
   }, [router]);
-  if (error) return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#111315", color: "#f2f4f6" }}>{error}</main>;
-  if (memberships.length === 0) return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#111315" }}><Spin /></main>;
-  return <main style={{ minHeight: "100vh", background: "#111315", padding: 48, color: "#f2f4f6" }}>
-    <Typography.Title level={3}>Escolha uma empresa</Typography.Title>
-    <div style={{ display: "grid", gap: 12, maxWidth: 560 }}>
-      {memberships.map((workspace) => <Card key={workspace.tenantId} title={workspace.tenantName}>
-        <Typography.Paragraph>{workspace.segment} · {workspace.role}</Typography.Paragraph>
-        <Button type="primary" onClick={() => router.push("/workspace/" + workspace.tenantId)}>Abrir workspace</Button>
-      </Card>)}
-    </div>
-  </main>;
+  if (error) return <main className="appStatePage"><section className="appStateCard" role="alert"><p className="appStateEyebrow">WORKSPACES</p><h1 className="appStateTitle">Não foi possível carregar as empresas</h1><p className="appStateCopy">{error}</p><a className="appStateAction appStateActionSecondary" href="/api/auth/logout">Sair</a></section></main>;
+  if (memberships.length === 0) return <main className="appStatePage"><section className="appStateCard" role="status"><div className="appStateBrand"><span className="appStateLogo">O</span><span className="appStateBrandName">OrbiBots</span></div><div className="appStateLoading"><span className="appStateSpinner" aria-hidden="true" />Carregando seus workspaces…</div></section></main>;
+  return <main className="appStatePage"><div className="appStateLayout">
+    <section className="appStateCard">
+      <div className="appStateBrand"><span className="appStateLogo">O</span><span className="appStateBrandName">OrbiBots</span></div>
+      <p className="appStateEyebrow">SELEÇÃO DE EMPRESA</p>
+      <h1 className="appStateTitle">Escolha um workspace</h1>
+      <p className="appStateCopy">Você tem acesso a mais de uma empresa. Selecione onde quer trabalhar.</p>
+      <div className="workspaceChoiceList">
+        {memberships.map((workspace) => <button className="workspaceChoice" key={workspace.tenantId} onClick={() => router.push("/workspace/" + workspace.tenantId)}>
+          <span><span className="workspaceChoiceName">{workspace.tenantName}</span><span className="workspaceChoiceMeta">{workspace.segment} · {workspace.role}</span></span>
+          <span className="workspaceChoiceArrow" aria-hidden="true">→</span>
+        </button>)}
+      </div>
+    </section>
+  </div></main>;
 }

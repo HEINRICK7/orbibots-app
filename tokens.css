@@ -1,23 +1,30 @@
+/* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V5
+ * Studio workbench · Coral light · N5 compact section nav · Ft5 state line
+ * Contrast: AA targets; review pending rendered capture.
+ */
 :root {
-  color-scheme: dark;
-  --color-canvas: oklch(0.18 0.012 255);
-  --color-surface: oklch(0.215 0.012 255);
-  --color-surface-raised: oklch(0.245 0.014 255);
-  --color-surface-hover: oklch(0.28 0.016 255);
-  --color-border: oklch(0.34 0.012 255);
-  --color-border-strong: oklch(0.43 0.016 255);
-  --color-text: oklch(0.94 0.008 255);
-  --color-text-muted: oklch(0.72 0.014 255);
-  --color-text-quiet: oklch(0.63 0.014 255);
-  --color-accent: oklch(0.76 0.12 225);
-  --color-accent-ink: oklch(0.18 0.012 255);
-  --color-focus: oklch(0.82 0.12 225);
-  --color-accent-soft: oklch(0.3 0.045 225);
-  --color-success: oklch(0.75 0.13 155);
-  --color-warning: oklch(0.79 0.13 80);
-  --color-danger: oklch(0.7 0.16 25);
-  --color-info: oklch(0.75 0.1 240);
-  --color-overlay: oklch(0.15 0.012 255 / 0.88);
+  color-scheme: light;
+  --color-canvas: oklch(0.975 0.012 78);
+  --color-surface: oklch(0.995 0.005 82);
+  --color-surface-raised: oklch(0.955 0.012 78);
+  --color-surface-hover: oklch(0.935 0.018 76);
+  --color-border: oklch(0.875 0.018 75);
+  --color-border-strong: oklch(0.785 0.025 70);
+  --color-text: oklch(0.235 0.025 260);
+  --color-text-muted: oklch(0.445 0.023 258);
+  --color-text-quiet: oklch(0.55 0.02 255);
+  --color-accent: oklch(0.59 0.17 32);
+  --color-accent-ink: oklch(0.99 0.005 75);
+  --color-focus: oklch(0.55 0.19 32);
+  --color-accent-soft: oklch(0.93 0.045 38);
+  --color-success: oklch(0.48 0.12 153);
+  --color-warning: oklch(0.52 0.13 78);
+  --color-danger: oklch(0.5 0.17 25);
+  --color-info: oklch(0.49 0.12 245);
+  --color-overlay: oklch(0.18 0.02 260 / 0.68);
+  --color-rail: oklch(0.245 0.027 260);
+  --color-rail-text: oklch(0.91 0.012 250);
+  --color-rail-muted: oklch(0.69 0.018 250);
 
   --font-display: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
   --font-body: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
@@ -32,20 +39,25 @@
   --space-8: 2rem;
   --space-10: 2.5rem;
   --space-12: 3rem;
+  --space-16: 4rem;
   --page-gutter: clamp(var(--space-4), 2vw, var(--space-8));
 
   --text-xs: 0.6875rem;
-  --text-sm: 0.75rem;
-  --text-md: 0.875rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.9rem;
   --text-lg: 1rem;
   --text-xl: 1.25rem;
-  --text-2xl: 1.625rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
 
-  --radius-sm: 0.375rem;
-  --radius-md: 0.625rem;
-  --radius-lg: 0.875rem;
+  --radius-sm: 0.4rem;
+  --radius-md: 0.7rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
   --radius-pill: 999px;
   --rule-thin: 1px solid var(--color-border);
+  --shadow-soft: 0 12px 32px oklch(0.25 0.03 260 / 0.08);
+  --shadow-floating: 0 24px 70px oklch(0.16 0.03 260 / 0.22);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);

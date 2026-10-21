@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export type GlyphName = "robot" | "person" | "book" | "settings" | "api" | "info" | "cloud" | "link" | "plus" | "lock" | "check" | "trash" | "refresh" | "arrow-up";
+export type GlyphName = "robot" | "person" | "book" | "settings" | "api" | "info" | "cloud" | "link" | "plus" | "lock" | "check" | "trash" | "refresh" | "arrow-up" | "expand" | "minimize" | "building";
 
 const drawings: Record<GlyphName, ReactNode> = {
   robot: <><rect x="5" y="8" width="14" height="11" rx="3" /><path d="M9 12h.01M15 12h.01M9 16h6M12 4v4M10 5h4" /></>,
@@ -17,6 +17,9 @@ const drawings: Record<GlyphName, ReactNode> = {
   trash: <><path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3" /></>,
   refresh: <><path d="M20 7v5h-5M4 17v-5h5" /><path d="M5.5 9A7 7 0 0 1 18 6l2 2M4 16l2 2a7 7 0 0 0 12.5-3" /></>,
   "arrow-up": <><path d="M12 19V5M6 11l6-6 6 6" /></>,
+  expand: <><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3" /></>,
+  minimize: <><path d="M8 3v5H3M21 8h-5V3M16 21v-5h5M3 16h5v5" /></>,
+  building: <><path d="M4 21V5a2 2 0 0 1 2-2h8v18M14 9h4a2 2 0 0 1 2 2v10M2 21h20" /><path d="M8 7h2M8 11h2M8 15h2M16 13h1M16 17h1" /></>,
 };
 
 export function Glyph({ name }: { name: GlyphName }) {
