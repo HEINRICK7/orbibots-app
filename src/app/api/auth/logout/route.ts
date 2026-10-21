@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ACCESS_COOKIE, authClientId, authLogoutUri, cognitoLoginBase, clearCookieOptions,
-  frontendOrigin, OAUTH_STATE_COOKIE, originMatches, REFRESH_COOKIE, TENANT_COOKIE } from "@/lib/session-cookies";
+  frontendOrigin, OAUTH_STATE_COOKIE, originMatches, REFRESH_COOKIE, SESSION_STARTED_COOKIE, TENANT_COOKIE } from "@/lib/session-cookies";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
 
   if (!base || !clientId || !validOrigin) {
     const response = NextResponse.redirect(new URL("/login", origin));
-    for (const name of [ACCESS_COOKIE, REFRESH_COOKIE, TENANT_COOKIE, OAUTH_STATE_COOKIE]) response.cookies.set(name, "", clearCookieOptions());
+    for (const name of [ACCESS_COOKIE, REFRESH_COOKIE, SESSION_STARTED_COOKIE, TENANT_COOKIE, OAUTH_STATE_COOKIE])
+      response.cookies.set(name, "", clearCookieOptions());
     response.headers.set("Cache-Control", "no-store");
     return response;
   }
@@ -37,7 +38,8 @@ export async function GET(request: NextRequest) {
   signout.searchParams.set("client_id", clientId);
   signout.searchParams.set("logout_uri", authLogoutUri(origin));
   const response = NextResponse.redirect(signout);
-  for (const name of [ACCESS_COOKIE, REFRESH_COOKIE, TENANT_COOKIE, OAUTH_STATE_COOKIE]) response.cookies.set(name, "", clearCookieOptions());
+  for (const name of [ACCESS_COOKIE, REFRESH_COOKIE, SESSION_STARTED_COOKIE, TENANT_COOKIE, OAUTH_STATE_COOKIE])
+    response.cookies.set(name, "", clearCookieOptions());
   response.headers.set("Cache-Control", "no-store");
   return response;
 }

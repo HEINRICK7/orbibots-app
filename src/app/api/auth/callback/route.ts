@@ -1,8 +1,10 @@
 import { timingSafeEqual } from "node:crypto";
 import { verifyCognitoIdToken } from "@/lib/cognito-id-token";
+import { createSessionMarker, REFRESH_SESSION_MAX_AGE_SECONDS } from "@/lib/cognito-session";
 import { NextRequest, NextResponse } from "next/server";
 import { ACCESS_COOKIE, authClientId, authRedirectUri, cognitoLoginBase, frontendOrigin,
-  OAUTH_STATE_COOKIE, REFRESH_COOKIE, TENANT_COOKIE, clearCookieOptions, originMatches, sessionCookieOptions } from "@/lib/session-cookies";
+  OAUTH_STATE_COOKIE, REFRESH_COOKIE, SESSION_STARTED_COOKIE, TENANT_COOKIE, clearCookieOptions, originMatches,
+  sessionCookieOptions } from "@/lib/session-cookies";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 type OAuthTransaction = { state: string; verifier: string; nonce: string };
@@ -13,7 +15,8 @@ function validEqual(left: string, right: string) {
 }
 function fail(request: NextRequest) {
   const response = NextResponse.redirect(new URL("/login?error=login_failed", frontendOrigin(request.url, request.headers)));
-  for (const name of [ACCESS_COOKIE, REFRESH_COOKIE, TENANT_COOKIE, OAUTH_STATE_COOKIE]) response.cookies.set(name, "", clearCookieOptions());
+  for (const name of [ACCESS_COOKIE, REFRESH_COOKIE, SESSION_STARTED_COOKIE, TENANT_COOKIE, OAUTH_STATE_COOKIE])
+    response.cookies.set(name, "", clearCookieOptions());
   return response;
 }
 export async function GET(request: NextRequest) {
@@ -47,7 +50,10 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.redirect(new URL("/", origin));
     response.headers.set("Cache-Control", "no-store");
     response.cookies.set(ACCESS_COOKIE, tokens.access_token, sessionCookieOptions(tokens.expires_in!));
-    response.cookies.set(REFRESH_COOKIE, tokens.refresh_token, sessionCookieOptions(30 * 24 * 60 * 60));
+    response.cookies.set(REFRESH_COOKIE, tokens.refresh_token, sessionCookieOptions(REFRESH_SESSION_MAX_AGE_SECONDS));
+    const issuedAt = Math.floor(Date.now() / 1000);
+    response.cookies.set(SESSION_STARTED_COOKIE, createSessionMarker(issuedAt, tokens.refresh_token),
+      sessionCookieOptions(REFRESH_SESSION_MAX_AGE_SECONDS));
     response.cookies.set(OAUTH_STATE_COOKIE, "", sessionCookieOptions(0));
     return response;
   } catch { return fail(request); }

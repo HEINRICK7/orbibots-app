@@ -1,5 +1,6 @@
 export const ACCESS_COOKIE = "orbibots_access";
 export const REFRESH_COOKIE = "orbibots_refresh";
+export const SESSION_STARTED_COOKIE = "orbibots_session_started";
 export const TENANT_COOKIE = "orbibots_tenant";
 export const OAUTH_STATE_COOKIE = "orbibots_oauth";
 export function secureCookie() { return process.env.NODE_ENV === "production"; }

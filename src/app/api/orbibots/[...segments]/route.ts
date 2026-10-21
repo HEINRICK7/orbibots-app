@@ -1,33 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isSupportedApiProxyRequest } from "@/features/agent-builder/infrastructure/proxy-policy";
-import { ACCESS_COOKIE, REFRESH_COOKIE, TENANT_COOKIE, authClientId, browserOriginAllowed, cognitoLoginBase,
-  clearCookieOptions, sessionCookieOptions } from "@/lib/session-cookies";
+import { activeSessionWindow, refreshCognitoSession, persistRefreshedCognitoSession, clearCognitoSession,
+  type ActiveSessionWindow, type RefreshedCognitoTokens } from "@/lib/cognito-session";
+import { ACCESS_COOKIE, REFRESH_COOKIE, SESSION_STARTED_COOKIE, TENANT_COOKIE, browserOriginAllowed } from "@/lib/session-cookies";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 type RouteContext = { params: Promise<{ segments: string[] }> };
-type RefreshedTokens = { access_token?: string; refresh_token?: string; expires_in?: number };
 function problem(status: number, title: string, detail: string, code: string) {
   return NextResponse.json({ type: "https://orbibots.com/problems/" + code, title, status, detail, code }, {
     status, headers: { "Content-Type": "application/problem+json", "Cache-Control": "no-store" },
   });
 }
-function sameOriginPost(request: NextRequest) {
-  return browserOriginAllowed(request);
-}
-async function refreshAccessToken(refreshToken: string): Promise<RefreshedTokens | null> {
-  const base = cognitoLoginBase();
-  const clientId = authClientId();
-  if (!base || !clientId) return null;
-  try {
-    const response = await fetch(base + "/oauth2/token", {
-      method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
-      body: new URLSearchParams({ grant_type: "refresh_token", client_id: clientId, refresh_token: refreshToken }),
-      cache: "no-store", signal: AbortSignal.timeout(10_000),
-    });
-    if (!response.ok) return null;
-    const tokens = await response.json() as RefreshedTokens;
-    return tokens.access_token && tokens.refresh_token && Number.isInteger(tokens.expires_in) && (tokens.expires_in ?? 0) > 0 ? tokens : null;
-  } catch { return null; }
+function sameOriginPost(request: NextRequest) { return browserOriginAllowed(request); }
+function expiredSession() {
+  const response = problem(401, "Unauthorized", "Sua sessão expirou. Entre novamente.", "session_expired");
+  clearCognitoSession(response);
+  return response;
 }
 async function proxy(request: NextRequest, context: RouteContext) {
   const { segments } = await context.params;
@@ -35,9 +23,16 @@ async function proxy(request: NextRequest, context: RouteContext) {
     return problem(404, "Not Found", "Esta operação não está disponível no BFF.", "proxy_route_not_supported");
   if (request.method === "POST" && !sameOriginPost(request))
     return problem(403, "Forbidden", "A origem da solicitação não foi autorizada.", "csrf_origin_rejected");
-  const accessToken = request.cookies.get(ACCESS_COOKIE)?.value;
+  let accessToken = request.cookies.get(ACCESS_COOKIE)?.value || "";
   const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
-  if (!accessToken) return problem(401, "Unauthorized", "Entre para continuar.", "authentication_required");
+  if (!accessToken && !refreshToken) {
+    const response = problem(401, "Unauthorized", "Entre para continuar.", "authentication_required");
+    clearCognitoSession(response);
+    return response;
+  }
+  const sessionWindow: ActiveSessionWindow | null = activeSessionWindow(
+    request.cookies.get(SESSION_STARTED_COOKIE)?.value, refreshToken);
+  if (!sessionWindow) return expiredSession();
   const origin = process.env.ORBIBOTS_API_ORIGIN?.replace(/\/+$/, "");
   if (!origin) return problem(503, "Service Unavailable", "ORBIBOTS_API_ORIGIN não está configurado.", "backend_origin_missing");
   let parsedOrigin: URL;
@@ -62,36 +57,37 @@ async function proxy(request: NextRequest, context: RouteContext) {
       cache: "no-store", signal: AbortSignal.timeout(120_000) });
   };
   let upstream: Response;
-  let rotated: RefreshedTokens | null = null;
+  let rotated: RefreshedCognitoTokens | null = null;
+  if (!accessToken && refreshToken) {
+    rotated = await refreshCognitoSession(refreshToken);
+    if (!rotated) return expiredSession();
+    accessToken = rotated.access_token;
+  }
   try {
     upstream = await send(accessToken);
     if (upstream.status === 401 && refreshToken) {
-      rotated = await refreshAccessToken(refreshToken);
+      rotated = await refreshCognitoSession(refreshToken);
       if (rotated?.access_token) upstream = await send(rotated.access_token);
     }
   } catch (error) {
     const timedOut = error instanceof Error && error.name === "TimeoutError";
-    return problem(timedOut ? 504 : 502, timedOut ? "Gateway Timeout" : "Bad Gateway",
+    const response = problem(timedOut ? 504 : 502, timedOut ? "Gateway Timeout" : "Bad Gateway",
       timedOut ? "O backend não respondeu antes do limite." : "Não foi possível alcançar o backend.",
       timedOut ? "backend_timeout" : "backend_unreachable");
+    if (rotated && refreshToken) persistRefreshedCognitoSession(response, rotated, refreshToken, sessionWindow);
+    return response;
   }
-  if (upstream.status === 401 && refreshToken && !rotated) {
-    const expired = problem(401, "Unauthorized", "Sua sessão expirou. Entre novamente.", "session_expired");
-    for (const name of [ACCESS_COOKIE, REFRESH_COOKIE, TENANT_COOKIE]) expired.cookies.set(name, "", clearCookieOptions());
-    return expired;
-  }
+  if (upstream.status === 401 && refreshToken && !rotated) return expiredSession();
   const responseHeaders = new Headers({ "Cache-Control": "no-store" });
   for (const name of ["Content-Type", "X-Correlation-ID", "Retry-After"]) {
     const value = upstream.headers.get(name);
     if (value) responseHeaders.set(name, value);
   }
   const response = new NextResponse(await upstream.arrayBuffer(), { status: upstream.status, headers: responseHeaders });
-  if (rotated?.access_token) {
-    response.cookies.set(ACCESS_COOKIE, rotated.access_token, sessionCookieOptions(rotated.expires_in || 300));
-    if (rotated.refresh_token) response.cookies.set(REFRESH_COOKIE, rotated.refresh_token, sessionCookieOptions(30 * 24 * 60 * 60));
-  }
+  if (rotated && refreshToken && upstream.status !== 401)
+    persistRefreshedCognitoSession(response, rotated, refreshToken, sessionWindow);
   if (upstream.status === 401) {
-    for (const name of [ACCESS_COOKIE, REFRESH_COOKIE, TENANT_COOKIE]) response.cookies.set(name, "", clearCookieOptions());
+    clearCognitoSession(response);
   }
   return response;
 }
