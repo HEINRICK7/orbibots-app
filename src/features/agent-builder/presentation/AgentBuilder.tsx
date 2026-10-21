@@ -28,6 +28,7 @@ import { PERSONAL_TECH_MEMORY, PERSONAL_TECH_NAME } from "../application/persona
 import type { ApiOperation } from "../application/api-operation";
 import { Glyph } from "./Glyph";
 import { BehaviorTab } from "./BehaviorTab";
+import { EvolutionInboxTab } from "./EvolutionInboxTab";
 import { IdentityTab } from "./IdentityTab";
 import { KnowledgeTab } from "./KnowledgeTab";
 import { Playground } from "./Playground";
@@ -35,7 +36,7 @@ import { PublicationTab } from "./PublicationTab";
 import { ToolsTab } from "./ToolsTab";
 import styles from "./AgentBuilder.module.css";
 
-type BuilderTab = "identity" | "knowledge" | "behavior" | "tools" | "publication";
+type BuilderTab = "identity" | "knowledge" | "behavior" | "tools" | "publication" | "whatsapp";
 type RevisionCandidate = {
   revisionId: string;
   status: string;
@@ -349,9 +350,19 @@ export function AgentBuilder({ workspace }: { workspace: TenantMembershipRespons
         onPublish={handlePublish}
       />,
     },
+    {
+      key: "whatsapp",
+      label: <span className={styles.tabLabel}><Glyph name="api" /> WhatsApp</span>,
+      children: <EvolutionInboxTab
+        specialistId={specialist?.id ?? null}
+        canConfigure={workspace.role === "TENANT_ADMIN"}
+        published={Boolean(publication)}
+        active={activeTab === "whatsapp"}
+      />,
+    },
   ], [
     workspace, specialistName, specialist, busyOperation, uncertainOperations,
-    source, candidate, publication, specialistVersion,
+    source, candidate, publication, specialistVersion, activeTab,
   ]);
   const activeTabPosition = tabItems.findIndex((item) => item.key === activeTab) + 1;
 
@@ -398,7 +409,7 @@ export function AgentBuilder({ workspace }: { workspace: TenantMembershipRespons
         </div>
       )}
 
-      <div className={styles.workspace}>
+      <div className={`${styles.workspace} ${activeTab === "whatsapp" ? styles.workspaceInbox : ""}`}>
         <section className={styles.editorPane} aria-label="Configuração do especialista">
           <div className={styles.editorTopline}><div><span className={styles.eyebrow}>BUILDER</span><h2>Configuração</h2></div><span className={styles.editorStep} aria-label={`Etapa ${activeTabPosition} de ${tabItems.length}`}>{String(activeTabPosition).padStart(2, "0")} <i>/</i> {String(tabItems.length).padStart(2, "0")}</span></div>
           <nav className={styles.builderTabs} role="tablist" aria-label="Seções de configuração">
@@ -428,7 +439,7 @@ export function AgentBuilder({ workspace }: { workspace: TenantMembershipRespons
             >{item.children}</section>)}
           </div>
         </section>
-        <Playground
+        {activeTab !== "whatsapp" && <Playground
           agentName={specialist?.name ?? "Especialista ainda não criado"}
           specialistId={specialist?.id ?? null}
           publishedRevisionId={publication?.revisionId ?? null}
@@ -440,7 +451,7 @@ export function AgentBuilder({ workspace }: { workspace: TenantMembershipRespons
           pendingChatText={pendingChat?.text ?? null}
           onStartConversation={handleStartConversation}
           onSend={handleSendMessage}
-        />
+        />}
       </div>
 
       <footer className={styles.footerLine}>

@@ -7,6 +7,10 @@ describe("BFF API allowlist", () => {
     expect(isSupportedApiProxyRequest("GET", ["me"])).toBe(true);
     expect(isSupportedApiProxyRequest("GET", ["platform", "tenants"])).toBe(true);
     expect(isSupportedApiProxyRequest("GET", ["personal-tech"])).toBe(true);
+    expect(isSupportedApiProxyRequest("GET", ["specialists", id, "evolution"])).toBe(true);
+    expect(isSupportedApiProxyRequest("GET", ["specialists", id, "evolution", "conversations"])).toBe(true);
+    expect(isSupportedApiProxyRequest("GET", ["specialists", id, "evolution", "conversations", id, "messages"])).toBe(true);
+    expect(isSupportedApiProxyRequest("POST", ["specialists", id, "evolution"])).toBe(true);
     expect(isSupportedApiProxyRequest("POST", ["platform", "tenants"])).toBe(true);
     expect(isSupportedApiProxyRequest("POST", ["platform", "tenants", id, "owner-invitation"])).toBe(true);
   });
@@ -17,5 +21,7 @@ describe("BFF API allowlist", () => {
     expect(isSupportedApiProxyRequest("GET", ["specialists"])).toBe(false);
     expect(isSupportedApiProxyRequest("PATCH", ["platform", "tenants", id])).toBe(false);
     expect(isSupportedApiProxyRequest("POST", ["..", "platform", "tenants"])).toBe(false);
+    expect(isSupportedApiProxyRequest("POST", ["specialists", id, "evolution", "conversations", id, "messages"])).toBe(false);
+    expect(isSupportedApiProxyRequest("GET", ["specialists", id, "evolution", "secrets"])).toBe(false);
   });
 });

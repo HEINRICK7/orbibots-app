@@ -11,6 +11,12 @@ const supportedPostPaths = [
   new RegExp("^specialists/" + uuid + "/conversations$"),
   new RegExp("^conversations/" + uuid + "/messages$"),
 ];
+supportedGetPaths.push(
+  new RegExp("^specialists/" + uuid + "/evolution$"),
+  new RegExp("^specialists/" + uuid + "/evolution/conversations$"),
+  new RegExp("^specialists/" + uuid + "/evolution/conversations/" + uuid + "/messages$"),
+);
+supportedPostPaths.push(new RegExp("^specialists/" + uuid + "/evolution$"));
 export function isSupportedApiProxyRequest(method: string, segments: string[]): boolean {
   if (segments.length === 0 || segments.some((segment) => segment === "." || segment === "..")) return false;
   const path = segments.join("/");

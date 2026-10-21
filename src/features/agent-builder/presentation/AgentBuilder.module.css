@@ -76,6 +76,7 @@
 .dismissButton:hover { background: var(--color-surface-raised); color: var(--color-text); }
 
 .workspace { min-height: 0; flex: 1; display: grid; grid-template-columns: minmax(0, 1.03fr) minmax(22rem, 0.97fr); gap: 1rem; padding: 0 var(--page-gutter) 1rem; }
+.workspaceInbox { grid-template-columns: minmax(0, 1fr); }
 .editorPane, .playground { min-width: 0; min-height: 39rem; border: var(--rule-thin); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-soft); }
 .editorPane { display: flex; flex-direction: column; overflow: hidden; }
 .editorTopline { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; padding: 1.15rem 1.2rem 0.9rem; }

@@ -21,4 +21,27 @@ export interface PublishRevisionResponse { specialistId: string; revisionId: str
 export interface StartConversationResponse { conversationId: string; specialistId: string; knowledgeRevisionId: string; status: string; startedAt: string }
 export interface EvidenceItemResponse { evidenceId: string; sourceId: string; sourceRecordId: string; observedAt: string }
 export interface MessageAnswerResponse { messageId: string; conversationId: string; type: string; text: string; evidence: EvidenceItemResponse[]; actions: unknown[]; knowledgeRevisionId: string }
+export interface EvolutionChannelResponse {
+  connected: boolean;
+  instanceName: string | null;
+  connectedAt: string | null;
+  webhookPath: string;
+  event: string;
+  tokenHeader: string;
+}
+export interface EvolutionInboxConversation {
+  conversationId: string;
+  remoteJid: string;
+  lastMessage: string;
+  lastMessageAt: string;
+  messageCount: number;
+}
+export interface EvolutionInboxMessage {
+  messageId: string;
+  role: "USER" | "ASSISTANT";
+  type: string;
+  text: string;
+  createdAt: string;
+}
+export interface PageResponse<T> { items: T[]; page: number; size: number; total: number }
 export interface ApiProblem { type?: string; title?: string; status?: number; detail?: string; code?: string; correlationId?: string }

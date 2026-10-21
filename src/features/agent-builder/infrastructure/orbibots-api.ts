@@ -1,5 +1,6 @@
 import type {
-  ApiProblem, IngestDocumentResponse, MessageAnswerResponse, PersonalTechWorkspaceResponse, PublishRevisionResponse,
+  ApiProblem, EvolutionChannelResponse, EvolutionInboxConversation, EvolutionInboxMessage, IngestDocumentResponse,
+  MessageAnswerResponse, PageResponse, PersonalTechWorkspaceResponse, PublishRevisionResponse,
   SourceConnectionResponse, SpecialistResponse, StartConversationResponse, SyncRunResponse,
 } from "../domain/api-contracts";
 
@@ -56,6 +57,42 @@ export async function loadPersonalTech(fetcher: Fetcher = fetch): Promise<Person
       response.status, problem?.code ?? null, problem?.correlationId ?? response.headers.get("X-Correlation-ID"), response.status >= 500);
   }
   return payload as PersonalTechWorkspaceResponse;
+}
+async function get<T>(path: string, fetcher: Fetcher = fetch): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetcher("/api/orbibots/" + path, {
+      method: "GET", headers: { Accept: "application/json, application/problem+json" },
+      cache: "no-store", credentials: "same-origin", signal: AbortSignal.timeout(30_000),
+    });
+  } catch {
+    throw new OrbiBotsApiError("Não foi possível consultar o inbox do WhatsApp.", null, "backend_unreachable", null, true);
+  }
+  const payload = (await response.json().catch(() => null)) as ApiProblem | T | null;
+  if (!response.ok) {
+    const problem = payload as ApiProblem | null;
+    throw new OrbiBotsApiError(problem?.detail || problem?.title || "A API respondeu com HTTP " + response.status + ".",
+      response.status, problem?.code ?? null, problem?.correlationId ?? response.headers.get("X-Correlation-ID"), response.status >= 500);
+  }
+  return payload as T;
+}
+function evolutionPath(specialistId: string) {
+  return "specialists/" + encodeURIComponent(specialistId) + "/evolution";
+}
+export function loadEvolutionChannel(specialistId: string, fetcher?: Fetcher) {
+  return get<EvolutionChannelResponse>(evolutionPath(specialistId), fetcher);
+}
+export function bindEvolutionChannel(specialistId: string, instanceName: string, webhookToken: string, fetcher?: Fetcher) {
+  return post<EvolutionChannelResponse>(evolutionPath(specialistId), { instanceName, webhookToken }, {}, fetcher);
+}
+export function loadEvolutionInbox(specialistId: string, page = 0, size = 20, fetcher?: Fetcher) {
+  return get<PageResponse<EvolutionInboxConversation>>(
+    evolutionPath(specialistId) + "/conversations?page=" + page + "&size=" + size, fetcher);
+}
+export function loadEvolutionMessages(specialistId: string, conversationId: string, page = 0, size = 50, fetcher?: Fetcher) {
+  return get<PageResponse<EvolutionInboxMessage>>(
+    evolutionPath(specialistId) + "/conversations/" + encodeURIComponent(conversationId) +
+    "/messages?page=" + page + "&size=" + size, fetcher);
 }
 export function createSpecialist(name: string, profileOrFetcher?: string | Fetcher, fetcher?: Fetcher) {
   const profileKind = typeof profileOrFetcher === "string" ? profileOrFetcher : undefined;

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { createSpecialist, OrbiBotsApiError, publishRevision, sendMessage, uploadDocument } from "./orbibots-api";
+import { bindEvolutionChannel, createSpecialist, loadEvolutionChannel, loadEvolutionInbox,
+  loadEvolutionMessages, OrbiBotsApiError, publishRevision, sendMessage, uploadDocument } from "./orbibots-api";
 
 describe("OrbiBots API client", () => {
   it("sends create-specialist through the same-origin BFF without exposing a bearer token", async () => {
@@ -69,6 +70,35 @@ describe("OrbiBots API client", () => {
       method: "POST",
       headers: expect.objectContaining({ "If-Match": "0" }),
     }));
+  });
+
+  it("binds an Evolution instance through the authenticated BFF", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ connected: true }));
+    const webhookToken = "x".repeat(43);
+
+    await bindEvolutionChannel("specialist-1", "demo", webhookToken, fetcher);
+
+    expect(fetcher).toHaveBeenCalledWith("/api/orbibots/specialists/specialist-1/evolution", expect.objectContaining({
+      method: "POST",
+      credentials: "same-origin",
+      body: JSON.stringify({ instanceName: "demo", webhookToken }),
+    }));
+  });
+
+  it("reads connection and paginated web conversations without posting replies to WhatsApp", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json({ items: [], page: 0, size: 20, total: 0 }),
+    );
+
+    await loadEvolutionChannel("specialist-1", fetcher);
+    await loadEvolutionInbox("specialist-1", 0, 20, fetcher);
+    await loadEvolutionMessages("specialist-1", "conversation-1", 0, 50, fetcher);
+
+    expect(fetcher.mock.calls.map(([url]) => url)).toEqual([
+      "/api/orbibots/specialists/specialist-1/evolution",
+      "/api/orbibots/specialists/specialist-1/evolution/conversations?page=0&size=20",
+      "/api/orbibots/specialists/specialist-1/evolution/conversations/conversation-1/messages?page=0&size=50",
+    ]);
   });
 
   it("surfaces RFC 7807 details and correlation IDs from the backend", async () => {
