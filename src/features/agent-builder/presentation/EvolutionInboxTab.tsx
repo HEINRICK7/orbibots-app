@@ -63,8 +63,10 @@ export function EvolutionInboxTab({
   const [messages, setMessages] = useState<PageResponse<EvolutionInboxMessage> | null>(null);
   const [messagePage, setMessagePage] = useState(0);
   const [loadingInbox, setLoadingInbox] = useState(false);
+  const [chatFullscreen, setChatFullscreen] = useState(false);
   const threadEndRef = useRef<HTMLDivElement>(null);
   const seenTailRef = useRef<string | null>(null);
+  const fullscreenButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,6 +154,28 @@ export function EvolutionInboxTab({
     const timer = window.setInterval(() => { void refresh(); }, 5_000);
     return () => { cancelled = true; window.clearInterval(timer); };
   }, [active, specialistId, selectedId, messagePage]);
+
+  useEffect(() => {
+    setChatFullscreen(false);
+  }, [specialistId]);
+
+  useEffect(() => {
+    if (!chatFullscreen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    fullscreenButtonRef.current?.focus();
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setChatFullscreen(false);
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [chatFullscreen]);
 
   useEffect(() => {
     seenTailRef.current = null;
@@ -340,13 +364,27 @@ export function EvolutionInboxTab({
             <p className={styles.direction}>Remover um número bloqueia novas perguntas desse contato; o histórico existente continua visível no inbox.</p>
           </section>
 
-          <section className={styles.inboxSection} aria-label="Conversas recebidas do WhatsApp">
+          <section
+            className={`${styles.inboxSection} ${chatFullscreen ? styles.inboxFullscreen : ""}`}
+            aria-label="Conversas recebidas do WhatsApp"
+            role={chatFullscreen ? "dialog" : undefined}
+            aria-modal={chatFullscreen || undefined}
+          >
             <div className={styles.inboxHeading}>
               <div><h4>Conversas recebidas</h4><p>{inbox?.total ?? 0} conversa(s) · atualização a cada 5 segundos</p></div>
               <div className={styles.listControls}>
                 <span>{loadingInbox ? "Atualizando…" : `Página ${inboxPage + 1} de ${inboxPages}`}</span>
                 <button type="button" disabled={inboxPage === 0} onClick={() => setInboxPage((page) => Math.max(0, page - 1))}>Mais recentes</button>
                 <button type="button" disabled={inboxPage + 1 >= inboxPages} onClick={() => setInboxPage((page) => page + 1)}>Mais antigas</button>
+                <button
+                  ref={fullscreenButtonRef}
+                  type="button"
+                  className={styles.fullscreenButton}
+                  aria-pressed={chatFullscreen}
+                  onClick={() => setChatFullscreen((value) => !value)}
+                >
+                  {chatFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+                </button>
               </div>
             </div>
             <div className={styles.inbox}>
