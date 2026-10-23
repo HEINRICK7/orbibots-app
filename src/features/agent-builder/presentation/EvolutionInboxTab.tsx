@@ -20,6 +20,8 @@ import type {
 } from "../domain/api-contracts";
 import styles from "./EvolutionInboxTab.module.css";
 
+const INBOX_REFRESH_MS = 1_000;
+
 function createWebhookToken() {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   let binary = "";
@@ -112,8 +114,10 @@ export function EvolutionInboxTab({
   useEffect(() => {
     if (!active || !specialistId) return;
     let cancelled = false;
+    let inFlight = false;
     const refresh = async () => {
-      setLoadingInbox(true);
+      if (inFlight) return;
+      inFlight = true;
       try {
         const result = await loadEvolutionInbox(specialistId, inboxPage, 20);
         if (!cancelled) {
@@ -124,12 +128,22 @@ export function EvolutionInboxTab({
       } catch (cause: unknown) {
         if (!cancelled) setError(cause instanceof Error ? cause.message : "Não foi possível atualizar as conversas.");
       } finally {
+        inFlight = false;
         if (!cancelled) setLoadingInbox(false);
       }
     };
+    setLoadingInbox(true);
     void refresh();
-    const timer = window.setInterval(() => { void refresh(); }, 5_000);
-    return () => { cancelled = true; window.clearInterval(timer); };
+    const timer = window.setInterval(() => { void refresh(); }, INBOX_REFRESH_MS);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [active, specialistId, inboxPage]);
 
   useEffect(() => {
@@ -142,17 +156,30 @@ export function EvolutionInboxTab({
       return;
     }
     let cancelled = false;
+    let inFlight = false;
     const refresh = async () => {
+      if (inFlight) return;
+      inFlight = true;
       try {
         const result = await loadEvolutionMessages(specialistId, selectedId, messagePage, 50);
         if (!cancelled) setMessages(result);
       } catch (cause: unknown) {
         if (!cancelled) setError(cause instanceof Error ? cause.message : "Não foi possível abrir as mensagens.");
+      } finally {
+        inFlight = false;
       }
     };
     void refresh();
-    const timer = window.setInterval(() => { void refresh(); }, 5_000);
-    return () => { cancelled = true; window.clearInterval(timer); };
+    const timer = window.setInterval(() => { void refresh(); }, INBOX_REFRESH_MS);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [active, specialistId, selectedId, messagePage]);
 
   useEffect(() => {
@@ -371,7 +398,7 @@ export function EvolutionInboxTab({
             aria-modal={chatFullscreen || undefined}
           >
             <div className={styles.inboxHeading}>
-              <div><h4>Conversas recebidas</h4><p>{inbox?.total ?? 0} conversa(s) · atualização a cada 5 segundos</p></div>
+              <div><h4>Conversas recebidas</h4><p>{inbox?.total ?? 0} conversa(s) · atualização a cada segundo</p></div>
               <div className={styles.listControls}>
                 <span>{loadingInbox ? "Atualizando…" : `Página ${inboxPage + 1} de ${inboxPages}`}</span>
                 <button type="button" disabled={inboxPage === 0} onClick={() => setInboxPage((page) => Math.max(0, page - 1))}>Mais recentes</button>
