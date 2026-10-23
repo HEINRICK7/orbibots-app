@@ -29,6 +29,11 @@ export interface EvolutionChannelResponse {
   event: string;
   tokenHeader: string;
 }
+export interface EvolutionAllowedSender {
+  id: string;
+  phoneNumber: string;
+  createdAt: string;
+}
 export interface EvolutionInboxConversation {
   conversationId: string;
   remoteJid: string;

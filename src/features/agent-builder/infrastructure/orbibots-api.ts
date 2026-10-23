@@ -1,6 +1,6 @@
 import type {
   ApiProblem, EvolutionChannelResponse, EvolutionInboxConversation, EvolutionInboxMessage, IngestDocumentResponse,
-  MessageAnswerResponse, PageResponse, PersonalTechWorkspaceResponse, PublishRevisionResponse,
+  EvolutionAllowedSender, MessageAnswerResponse, PageResponse, PersonalTechWorkspaceResponse, PublishRevisionResponse,
   SourceConnectionResponse, SpecialistResponse, StartConversationResponse, SyncRunResponse,
 } from "../domain/api-contracts";
 
@@ -76,6 +76,24 @@ async function get<T>(path: string, fetcher: Fetcher = fetch): Promise<T> {
   }
   return payload as T;
 }
+async function remove(path: string, fetcher: Fetcher = fetch): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetcher("/api/orbibots/" + path, {
+      method: "DELETE", headers: { Accept: "application/json, application/problem+json" },
+      cache: "no-store", credentials: "same-origin", signal: AbortSignal.timeout(30_000),
+    });
+  } catch {
+    throw new OrbiBotsApiError("Não foi possível confirmar a remoção. Confira a conexão antes de repetir a operação.",
+      null, "backend_unreachable", null, true);
+  }
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null) as ApiProblem | null;
+    throw new OrbiBotsApiError(problem?.detail || problem?.title || "A API respondeu com HTTP " + response.status + ".",
+      response.status, problem?.code ?? null,
+      problem?.correlationId ?? response.headers.get("X-Correlation-ID"), response.status >= 500);
+  }
+}
 function evolutionPath(specialistId: string) {
   return "specialists/" + encodeURIComponent(specialistId) + "/evolution";
 }
@@ -84,6 +102,16 @@ export function loadEvolutionChannel(specialistId: string, fetcher?: Fetcher) {
 }
 export function bindEvolutionChannel(specialistId: string, instanceName: string, webhookToken: string, fetcher?: Fetcher) {
   return post<EvolutionChannelResponse>(evolutionPath(specialistId), { instanceName, webhookToken }, {}, fetcher);
+}
+export function loadEvolutionAllowedSenders(specialistId: string, page = 0, size = 20, fetcher?: Fetcher) {
+  return get<PageResponse<EvolutionAllowedSender>>(
+    evolutionPath(specialistId) + "/allowed-senders?page=" + page + "&size=" + size, fetcher);
+}
+export function allowEvolutionSender(specialistId: string, phoneNumber: string, fetcher?: Fetcher) {
+  return post<EvolutionAllowedSender>(evolutionPath(specialistId) + "/allowed-senders", { phoneNumber }, {}, fetcher);
+}
+export function removeEvolutionSender(specialistId: string, senderId: string, fetcher?: Fetcher) {
+  return remove(evolutionPath(specialistId) + "/allowed-senders/" + encodeURIComponent(senderId), fetcher);
 }
 export function loadEvolutionInbox(specialistId: string, page = 0, size = 20, fetcher?: Fetcher) {
   return get<PageResponse<EvolutionInboxConversation>>(

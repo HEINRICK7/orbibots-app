@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { bindEvolutionChannel, createSpecialist, loadEvolutionChannel, loadEvolutionInbox,
-  loadEvolutionMessages, OrbiBotsApiError, publishRevision, sendMessage, uploadDocument } from "./orbibots-api";
+import { allowEvolutionSender, bindEvolutionChannel, createSpecialist, loadEvolutionAllowedSenders,
+  loadEvolutionChannel, loadEvolutionInbox, loadEvolutionMessages, OrbiBotsApiError, publishRevision,
+  removeEvolutionSender, sendMessage, uploadDocument } from "./orbibots-api";
 
 describe("OrbiBots API client", () => {
   it("sends create-specialist through the same-origin BFF without exposing a bearer token", async () => {
@@ -83,6 +84,25 @@ describe("OrbiBots API client", () => {
       credentials: "same-origin",
       body: JSON.stringify({ instanceName: "demo", webhookToken }),
     }));
+  });
+
+  it("manages paginated allowed Evolution senders through the same-origin BFF", async () => {
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({ items: [], page: 0, size: 20, total: 0 }))
+      .mockResolvedValueOnce(Response.json({ id: "sender-1", phoneNumber: "+5511999999999", createdAt: "2026-10-22T00:00:00Z" }, { status: 201 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    await loadEvolutionAllowedSenders("specialist-1", 0, 20, fetcher);
+    await allowEvolutionSender("specialist-1", "+5511999999999", fetcher);
+    await removeEvolutionSender("specialist-1", "sender-1", fetcher);
+
+    expect(fetcher.mock.calls.map(([url]) => url)).toEqual([
+      "/api/orbibots/specialists/specialist-1/evolution/allowed-senders?page=0&size=20",
+      "/api/orbibots/specialists/specialist-1/evolution/allowed-senders",
+      "/api/orbibots/specialists/specialist-1/evolution/allowed-senders/sender-1",
+    ]);
+    expect(fetcher.mock.calls[1][1]).toEqual(expect.objectContaining({ method: "POST", body: JSON.stringify({ phoneNumber: "+5511999999999" }) }));
+    expect(fetcher.mock.calls[2][1]).toEqual(expect.objectContaining({ method: "DELETE", credentials: "same-origin" }));
   });
 
   it("reads connection and paginated web conversations without posting replies to WhatsApp", async () => {

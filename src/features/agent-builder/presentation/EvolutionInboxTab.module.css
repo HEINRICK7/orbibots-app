@@ -30,6 +30,14 @@
 .instructions small { color: var(--color-text-quiet); font-size: 0.62rem; line-height: 1.4; }
 .direction { margin: 0.75rem 0 0; }
 .error { margin: 0.6rem 0; color: var(--color-danger); font-size: var(--text-xs); }
+.senderList { display: grid; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+.senderRow { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.55rem 0.65rem; border: var(--rule-thin); border-radius: var(--radius-sm); background: var(--color-surface-raised); }
+.senderRow code { color: var(--color-text); font-family: var(--font-mono); font-size: var(--text-xs); }
+.senderRow button, .senderControls button { padding: 0.35rem 0.55rem; border: var(--rule-thin); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text-muted); font: inherit; font-size: 0.65rem; cursor: pointer; }
+.senderRow button:disabled, .senderControls button:disabled { color: var(--color-text-quiet); cursor: not-allowed; opacity: 0.55; }
+.senderNote { margin: 0.5rem 0; color: var(--color-text-quiet); font-size: var(--text-xs); line-height: 1.5; }
+.senderControls { display: flex; align-items: center; justify-content: flex-end; gap: 0.4rem; margin-top: 0.5rem; }
+.senderControls span { color: var(--color-text-quiet); font-family: var(--font-mono); font-size: 0.6rem; }
 .inboxHeading { align-items: center; margin-bottom: 0.7rem; }
 .inboxHeading > span { color: var(--color-text-quiet); font-family: var(--font-mono); font-size: 0.62rem; }
 .listControls, .messageControls { display: flex; align-items: center; gap: 0.35rem; }
@@ -49,11 +57,12 @@
 .threadHeader strong { overflow: hidden; font-size: 0.68rem; text-overflow: ellipsis; }
 .threadHeader span { color: var(--color-text-quiet); font-family: var(--font-mono); font-size: 0.6rem; white-space: nowrap; }
 .messageControls { justify-content: space-between; padding: 0.4rem 0.75rem; border-bottom: var(--rule-thin); }
-.messages { display: flex; flex-direction: column; gap: 0.65rem; overflow-y: auto; padding: 0.85rem; }
+.messages { display: flex; flex-direction: column; gap: 0.65rem; max-height: min(70vh, 42rem); overflow-y: auto; padding: 0.85rem; scroll-behavior: smooth; }
 .incoming, .answer { max-width: 90%; align-self: flex-start; padding: 0.65rem 0.75rem; border: var(--rule-thin); border-radius: var(--radius-md); background: var(--color-surface); }
 .answer { align-self: flex-end; border-color: color-mix(in oklch, var(--color-accent) 25%, var(--color-border)); background: var(--color-accent-soft); }
 .incoming > span, .answer > span { color: var(--color-accent); font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: 0.03em; }
 .incoming p, .answer p { margin: 0.35rem 0; color: var(--color-text); font-size: var(--text-xs); line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+.answer p { font-size: 1.125rem; font-weight: 700; line-height: 1.45; }
 .incoming time, .answer time { display: block; color: var(--color-text-quiet); font-family: var(--font-mono); font-size: 0.57rem; text-align: right; }
 .noConversations, .empty { display: grid; align-content: center; justify-items: center; gap: 0.35rem; min-height: 8rem; margin: 0; padding: 1rem; color: var(--color-text-quiet); font-size: var(--text-xs); text-align: center; }
 .empty { min-height: 13rem; border: var(--rule-thin); border-radius: var(--radius-lg); background: var(--color-surface); }

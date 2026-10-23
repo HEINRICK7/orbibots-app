@@ -1,14 +1,18 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
+  allowEvolutionSender,
   bindEvolutionChannel,
+  loadEvolutionAllowedSenders,
   loadEvolutionChannel,
   loadEvolutionInbox,
   loadEvolutionMessages,
   OrbiBotsApiError,
+  removeEvolutionSender,
 } from "../infrastructure/orbibots-api";
 import type {
+  EvolutionAllowedSender,
   EvolutionChannelResponse,
   EvolutionInboxConversation,
   EvolutionInboxMessage,
@@ -49,20 +53,31 @@ export function EvolutionInboxTab({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inbox, setInbox] = useState<PageResponse<EvolutionInboxConversation> | null>(null);
+  const [allowedSenders, setAllowedSenders] = useState<PageResponse<EvolutionAllowedSender> | null>(null);
+  const [senderPage, setSenderPage] = useState(0);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [senderBusy, setSenderBusy] = useState(false);
+  const [senderError, setSenderError] = useState<string | null>(null);
   const [inboxPage, setInboxPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<PageResponse<EvolutionInboxMessage> | null>(null);
   const [messagePage, setMessagePage] = useState(0);
   const [loadingInbox, setLoadingInbox] = useState(false);
+  const threadEndRef = useRef<HTMLDivElement>(null);
+  const seenTailRef = useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setConnection(null);
     setInbox(null);
+    setAllowedSenders(null);
     setMessages(null);
     setSelectedId(null);
     setInboxPage(0);
     setMessagePage(0);
+    setSenderPage(0);
+    setPhoneNumber("");
+    setSenderError(null);
     setInstanceName("");
     setTokenForVps(null);
     setRetryToken(null);
@@ -77,6 +92,20 @@ export function EvolutionInboxTab({
     });
     return () => { cancelled = true; };
   }, [specialistId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!specialistId || !connection?.connected || !canConfigure) {
+      setAllowedSenders(null);
+      return () => { cancelled = true; };
+    }
+    loadEvolutionAllowedSenders(specialistId, senderPage, 20).then((result) => {
+      if (!cancelled) setAllowedSenders(result);
+    }).catch((cause: unknown) => {
+      if (!cancelled) setSenderError(cause instanceof Error ? cause.message : "Não foi possível consultar os números permitidos.");
+    });
+    return () => { cancelled = true; };
+  }, [specialistId, connection?.connected, canConfigure, senderPage]);
 
   useEffect(() => {
     if (!active || !specialistId) return;
@@ -124,6 +153,20 @@ export function EvolutionInboxTab({
     return () => { cancelled = true; window.clearInterval(timer); };
   }, [active, specialistId, selectedId, messagePage]);
 
+  useEffect(() => {
+    seenTailRef.current = null;
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (messagePage !== 0) return;
+    const tail = messages?.items.at(-1);
+    if (!tail) return;
+    const marker = `${selectedId}:${tail.messageId}`;
+    if (seenTailRef.current === marker) return;
+    seenTailRef.current = marker;
+    threadEndRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+  }, [messages, messagePage, selectedId]);
+
   async function handleBind(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!specialistId || !instanceName.trim() || busy) return;
@@ -153,7 +196,42 @@ export function EvolutionInboxTab({
     setCopied(true);
   }
 
+  async function handleAllowSender(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!specialistId || !phoneNumber.trim() || senderBusy) return;
+    setSenderBusy(true);
+    setSenderError(null);
+    try {
+      await allowEvolutionSender(specialistId, phoneNumber.trim());
+      setPhoneNumber("");
+      setSenderPage(0);
+      setAllowedSenders(await loadEvolutionAllowedSenders(specialistId, 0, 20));
+    } catch (cause: unknown) {
+      setSenderError(cause instanceof Error ? cause.message : "Não foi possível liberar este número.");
+    } finally {
+      setSenderBusy(false);
+    }
+  }
+
+  async function handleRemoveSender(senderId: string) {
+    if (!specialistId || senderBusy) return;
+    setSenderBusy(true);
+    setSenderError(null);
+    try {
+      await removeEvolutionSender(specialistId, senderId);
+      const nextPage = senderPage > 0 && (allowedSenders?.items.length ?? 0) === 1 ? senderPage - 1 : senderPage;
+      setSenderPage(nextPage);
+      setAllowedSenders(await loadEvolutionAllowedSenders(specialistId, nextPage, 20));
+    } catch (cause: unknown) {
+      setSenderError(cause instanceof Error ? cause.message : "Não foi possível remover este número.");
+    } finally {
+      setSenderBusy(false);
+    }
+  }
+
   const conversations = inbox?.items ?? [];
+  const allowedSenderItems = allowedSenders?.items ?? [];
+  const allowedSenderPages = Math.max(1, Math.ceil((allowedSenders?.total ?? 0) / (allowedSenders?.size || 20)));
   const selectedConversation = conversations.find((item) => item.conversationId === selectedId);
   const inboxPages = Math.max(1, Math.ceil((inbox?.total ?? 0) / (inbox?.size || 20)));
   const messagePages = Math.max(1, Math.ceil((messages?.total ?? 0) / (messages?.size || 50)));
@@ -212,6 +290,56 @@ export function EvolutionInboxTab({
             <p className={styles.direction}>Somente entrada: o especialista não envia respostas ao WhatsApp. Este estado confirma o cadastro, não monitora a conexão da instância na VPS.</p>
           </section>
 
+          <section className={styles.setupCard} aria-labelledby="evolution-allowed-senders-heading">
+            <div className={styles.cardHeading}>
+              <div><h4 id="evolution-allowed-senders-heading">Números autorizados</h4>
+                <p>Somente estes números podem iniciar perguntas para o especialista.</p></div>
+              {canConfigure && connection?.connected && allowedSenders && <code>{allowedSenders.total} liberado(s)</code>}
+            </div>
+            {canConfigure ? connection?.connected ? (
+              <>
+                <form className={styles.form} onSubmit={(event) => void handleAllowSender(event)}>
+                  <label>
+                    <span>Número com código do país</span>
+                    <input type="tel" value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)}
+                      placeholder="+55 11 99999-9999" maxLength={24} autoComplete="tel" />
+                    <small>Use o formato internacional, por exemplo +5511999999999. A lista vazia bloqueia todos.</small>
+                  </label>
+                  <button type="submit" disabled={senderBusy || !phoneNumber.trim()}>
+                    {senderBusy ? "Salvando…" : "Autorizar número"}
+                  </button>
+                </form>
+                {senderError && <p className={styles.error} role="alert">{senderError}</p>}
+                {allowedSenders === null ? (
+                  <p className={styles.senderNote}>{senderError ? "Não foi possível carregar a lista; atualize a aba para tentar novamente." : "Carregando números autorizados…"}</p>
+                ) : allowedSenderItems.length === 0 ? (
+                  <p className={styles.senderNote}>Nenhum número autorizado. O bot ignora todas as mensagens recebidas.</p>
+                ) : (
+                  <>
+                    <ul className={styles.senderList}>
+                      {allowedSenderItems.map((sender) => (
+                        <li key={sender.id} className={styles.senderRow}>
+                          <code>{sender.phoneNumber}</code>
+                          <button type="button" disabled={senderBusy} onClick={() => void handleRemoveSender(sender.id)}>
+                            Remover
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className={styles.senderControls}>
+                      <span>Página {senderPage + 1} de {allowedSenderPages}</span>
+                      <button type="button" disabled={senderPage === 0} onClick={() => setSenderPage((page) => Math.max(0, page - 1))}>Anterior</button>
+                      <button type="button" disabled={senderPage + 1 >= allowedSenderPages} onClick={() => setSenderPage((page) => page + 1)}>Próxima</button>
+                    </div>
+                  </>
+                )}
+              </>
+            ) : <p className={styles.senderNote}>Registre o canal Evolution para configurar quem pode enviar perguntas.</p> : (
+              <p className={styles.readOnly}>Somente o administrador da empresa pode consultar ou alterar esta lista.</p>
+            )}
+            <p className={styles.direction}>Remover um número bloqueia novas perguntas desse contato; o histórico existente continua visível no inbox.</p>
+          </section>
+
           <section className={styles.inboxSection} aria-label="Conversas recebidas do WhatsApp">
             <div className={styles.inboxHeading}>
               <div><h4>Conversas recebidas</h4><p>{inbox?.total ?? 0} conversa(s) · atualização a cada 5 segundos</p></div>
@@ -248,6 +376,7 @@ export function EvolutionInboxTab({
                           <time>{formatDate(message.createdAt)}</time>
                         </article>
                       ))}
+                      <div ref={threadEndRef} />
                     </div>
                   </>
                 ) : <p className={styles.noConversations}>Selecione uma conversa para ver o histórico.</p>}

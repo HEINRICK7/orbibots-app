@@ -11,16 +11,23 @@ const supportedPostPaths = [
   new RegExp("^specialists/" + uuid + "/conversations$"),
   new RegExp("^conversations/" + uuid + "/messages$"),
 ];
+const supportedDeletePaths: RegExp[] = [];
 supportedGetPaths.push(
   new RegExp("^specialists/" + uuid + "/evolution$"),
+  new RegExp("^specialists/" + uuid + "/evolution/allowed-senders$"),
   new RegExp("^specialists/" + uuid + "/evolution/conversations$"),
   new RegExp("^specialists/" + uuid + "/evolution/conversations/" + uuid + "/messages$"),
 );
-supportedPostPaths.push(new RegExp("^specialists/" + uuid + "/evolution$"));
+supportedPostPaths.push(
+  new RegExp("^specialists/" + uuid + "/evolution$"),
+  new RegExp("^specialists/" + uuid + "/evolution/allowed-senders$")
+);
+supportedDeletePaths.push(new RegExp("^specialists/" + uuid + "/evolution/allowed-senders/" + uuid + "$"));
 export function isSupportedApiProxyRequest(method: string, segments: string[]): boolean {
   if (segments.length === 0 || segments.some((segment) => segment === "." || segment === "..")) return false;
   const path = segments.join("/");
   if (method === "GET") return supportedGetPaths.some((pattern) => pattern.test(path));
   if (method === "POST") return supportedPostPaths.some((pattern) => pattern.test(path));
+  if (method === "DELETE") return supportedDeletePaths.some((pattern) => pattern.test(path));
   return false;
 }

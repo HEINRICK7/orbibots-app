@@ -11,7 +11,7 @@ function problem(status: number, title: string, detail: string, code: string) {
     status, headers: { "Content-Type": "application/problem+json", "Cache-Control": "no-store" },
   });
 }
-function sameOriginPost(request: NextRequest) { return browserOriginAllowed(request); }
+function sameOriginMutation(request: NextRequest) { return browserOriginAllowed(request); }
 function expiredSession() {
   const response = problem(401, "Unauthorized", "Sua sessão expirou. Entre novamente.", "session_expired");
   clearCognitoSession(response);
@@ -21,7 +21,7 @@ async function proxy(request: NextRequest, context: RouteContext) {
   const { segments } = await context.params;
   if (!isSupportedApiProxyRequest(request.method, segments))
     return problem(404, "Not Found", "Esta operação não está disponível no BFF.", "proxy_route_not_supported");
-  if (request.method === "POST" && !sameOriginPost(request))
+  if (["POST", "DELETE"].includes(request.method) && !sameOriginMutation(request))
     return problem(403, "Forbidden", "A origem da solicitação não foi autorizada.", "csrf_origin_rejected");
   let accessToken = request.cookies.get(ACCESS_COOKIE)?.value || "";
   const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
@@ -93,3 +93,4 @@ async function proxy(request: NextRequest, context: RouteContext) {
 }
 export async function GET(request: NextRequest, context: RouteContext) { return proxy(request, context); }
 export async function POST(request: NextRequest, context: RouteContext) { return proxy(request, context); }
+export async function DELETE(request: NextRequest, context: RouteContext) { return proxy(request, context); }
